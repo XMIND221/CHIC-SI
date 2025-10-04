@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Plus, Pencil, Trash2, ImageIcon } from "lucide-react"
+import { Plus, Pencil, Trash2, ImageIcon, ArrowLeft } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { updateProduct, createProduct, deleteProduct } from "./actions"
 
@@ -194,6 +194,11 @@ export default function AdminProductsPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <Button variant="ghost" size="sm" onClick={() => router.push("/admin/dashboard")} className="gap-2 mb-4">
+          <ArrowLeft className="w-4 h-4" />
+          Retour au tableau de bord
+        </Button>
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-serif font-bold">Produits</h1>

@@ -1,17 +1,19 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
-import { Plus, Pencil, Trash2, Tag } from "lucide-react"
+import { Plus, Pencil, Trash2, Tag, ArrowLeft } from "lucide-react"
 import { getCategories, createCategory, updateCategory, deleteCategory, type Category } from "./actions"
+import { AdminLayout } from "@/components/admin/admin-layout"
+import { useRouter } from "next/navigation"
 
 export default function CategoriesAdminPage() {
+  const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
@@ -72,104 +74,120 @@ export default function CategoriesAdminPage() {
   }
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Gestion des Catégories</h1>
-        <Button
-          onClick={() => {
-            setEditingCategory(null)
-            setShowForm(true)
-          }}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nouvelle Catégorie
+    <AdminLayout>
+      <div className="space-y-6">
+        <Button variant="ghost" size="sm" onClick={() => router.push("/admin/dashboard")} className="gap-2">
+          <ArrowLeft className="w-4 h-4" />
+          Retour au tableau de bord
         </Button>
-      </div>
 
-      {showForm && (
-        <Card className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="name">Nom *</Label>
-              <Input id="name" name="name" defaultValue={editingCategory?.name} required placeholder="Hijabs Premium" />
-            </div>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-serif font-bold">Catégories</h1>
+            <p className="text-muted-foreground mt-2">Gérez les catégories de produits</p>
+          </div>
+          <Button
+            onClick={() => {
+              setEditingCategory(null)
+              setShowForm(true)
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nouvelle Catégorie
+          </Button>
+        </div>
 
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                defaultValue={editingCategory?.description || ""}
-                placeholder="Soie, mousseline et tissus nobles"
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="image_url">URL de l'image</Label>
-              <Input
-                id="image_url"
-                name="image_url"
-                defaultValue={editingCategory?.image_url || ""}
-                placeholder="/category-image.jpg"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button type="submit">{editingCategory ? "Modifier" : "Créer"}</Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowForm(false)
-                  setEditingCategory(null)
-                }}
-              >
-                Annuler
-              </Button>
-            </div>
-          </form>
-        </Card>
-      )}
-
-      <div className="grid gap-4">
-        {categories.map((category) => (
-          <Card key={category.id} className="p-4">
-            <div className="flex gap-4">
-              <div className="w-20 h-20 bg-muted rounded flex items-center justify-center overflow-hidden">
-                {category.image_url ? (
-                  <img
-                    src={category.image_url || "/placeholder.svg"}
-                    alt={category.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Tag className="w-8 h-8 text-muted-foreground" />
-                )}
+        {showForm && (
+          <Card className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nom *</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  defaultValue={editingCategory?.name}
+                  required
+                  placeholder="Hijabs Premium"
+                />
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold">{category.name}</h3>
-                <p className="text-sm text-muted-foreground">{category.description}</p>
+
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  defaultValue={editingCategory?.description || ""}
+                  placeholder="Soie, mousseline et tissus nobles"
+                  rows={3}
+                />
               </div>
+
+              <div>
+                <Label htmlFor="image_url">URL de l'image</Label>
+                <Input
+                  id="image_url"
+                  name="image_url"
+                  defaultValue={editingCategory?.image_url || ""}
+                  placeholder="/category-image.jpg"
+                />
+              </div>
+
               <div className="flex gap-2">
+                <Button type="submit">{editingCategory ? "Modifier" : "Créer"}</Button>
                 <Button
-                  size="sm"
+                  type="button"
                   variant="outline"
                   onClick={() => {
-                    setEditingCategory(category)
-                    setShowForm(true)
+                    setShowForm(false)
+                    setEditingCategory(null)
                   }}
                 >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-                <Button size="sm" variant="destructive" onClick={() => handleDelete(category.id)}>
-                  <Trash2 className="w-4 h-4" />
+                  Annuler
                 </Button>
               </div>
-            </div>
+            </form>
           </Card>
-        ))}
+        )}
+
+        <div className="grid gap-4">
+          {categories.map((category) => (
+            <Card key={category.id} className="p-4">
+              <div className="flex gap-4">
+                <div className="w-20 h-20 bg-muted rounded flex items-center justify-center overflow-hidden">
+                  {category.image_url ? (
+                    <img
+                      src={category.image_url || "/placeholder.svg"}
+                      alt={category.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Tag className="w-8 h-8 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">{category.name}</h3>
+                  <p className="text-sm text-muted-foreground">{category.description}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setEditingCategory(category)
+                      setShowForm(true)
+                    }}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => handleDelete(category.id)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
       </div>
-    </div>
+    </AdminLayout>
   )
 }
