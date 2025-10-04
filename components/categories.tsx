@@ -4,6 +4,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
 import { useState, useEffect } from "react"
+import useSWR from "swr"
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 const categories = [
   {
@@ -40,100 +43,93 @@ const categories = [
   },
 ]
 
-const bannerImages = [
-  {
-    image: "/luxury-hijab-collection-banner.jpg",
-    title: "Collections Exclusives",
-    subtitle: "L'art de la couture française adaptée à la femme musulmane moderne",
-  },
-  {
-    image: "/premium-abaya-showcase-banner.jpg",
-    title: "Élégance Intemporelle",
-    subtitle: "Des créations uniques pour chaque occasion",
-  },
-  {
-    image: "/modern-hijab-fashion-banner.jpg",
-    title: "Style Contemporain",
-    subtitle: "Modernité et tradition en parfaite harmonie",
-  },
-]
-
 export default function Categories() {
   const [currentBanner, setCurrentBanner] = useState(0)
 
+  const { data: banners = [] } = useSWR("/api/banners", fetcher, {
+    refreshInterval: 5000,
+  })
+
   useEffect(() => {
+    if (banners.length === 0) return
     const timer = setInterval(() => {
-      setCurrentBanner((prev) => (prev + 1) % bannerImages.length)
+      setCurrentBanner((prev) => (prev + 1) % banners.length)
     }, 5000)
     return () => clearInterval(timer)
-  }, [])
+  }, [banners.length])
 
   const nextBanner = () => {
-    setCurrentBanner((prev) => (prev + 1) % bannerImages.length)
+    setCurrentBanner((prev) => (prev + 1) % banners.length)
   }
 
   const prevBanner = () => {
-    setCurrentBanner((prev) => (prev - 1 + bannerImages.length) % bannerImages.length)
+    setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length)
   }
 
   return (
     <section id="collections" className="py-16 bg-gradient-to-b from-stone-50 to-background">
       {/* Banner Carousel */}
-      <div className="relative mb-16 overflow-hidden">
-        <div className="relative h-[400px] md:h-[500px]">
-          {bannerImages.map((banner, index) => (
-            <div
-              key={index}
-              className={`absolute inset-0 transition-all duration-700 ease-in-out ${
-                index === currentBanner ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"
-              }`}
-            >
-              <img src={banner.image || "/placeholder.svg"} alt={banner.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-              <div className="absolute inset-0 flex items-center justify-center text-center">
-                <div className="max-w-4xl mx-auto px-4">
-                  <h2 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 drop-shadow-2xl">
-                    {banner.title}
-                  </h2>
-                  <p className="text-xl sm:text-2xl text-white/95 max-w-3xl mx-auto leading-relaxed drop-shadow-xl">
-                    {banner.subtitle}
-                  </p>
+      {banners.length > 0 && (
+        <div className="relative mb-16 overflow-hidden">
+          <div className="relative h-[400px] md:h-[500px]">
+            {banners.map((banner: any, index: number) => (
+              <div
+                key={banner.id}
+                className={`absolute inset-0 transition-all duration-700 ease-in-out ${
+                  index === currentBanner ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"
+                }`}
+              >
+                <img
+                  src={banner.image_url || "/placeholder.svg"}
+                  alt={banner.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                <div className="absolute inset-0 flex items-center justify-center text-center">
+                  <div className="max-w-4xl mx-auto px-4">
+                    <h2 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 drop-shadow-2xl">
+                      {banner.title}
+                    </h2>
+                    <p className="text-xl sm:text-2xl text-white/95 max-w-3xl mx-auto leading-relaxed drop-shadow-xl">
+                      {banner.subtitle}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        {/* Carousel Controls */}
-        <button
-          onClick={prevBanner}
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm p-3 rounded-full hover:bg-white/30 transition-all duration-300 border border-white/30"
-          aria-label="Previous banner"
-        >
-          <ChevronLeft className="w-6 h-6 text-white" />
-        </button>
-        <button
-          onClick={nextBanner}
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm p-3 rounded-full hover:bg-white/30 transition-all duration-300 border border-white/30"
-          aria-label="Next banner"
-        >
-          <ChevronRight className="w-6 h-6 text-white" />
-        </button>
+          {/* Carousel Controls */}
+          <button
+            onClick={prevBanner}
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm p-3 rounded-full hover:bg-white/30 transition-all duration-300 border border-white/30"
+            aria-label="Previous banner"
+          >
+            <ChevronLeft className="w-6 h-6 text-white" />
+          </button>
+          <button
+            onClick={nextBanner}
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm p-3 rounded-full hover:bg-white/30 transition-all duration-300 border border-white/30"
+            aria-label="Next banner"
+          >
+            <ChevronRight className="w-6 h-6 text-white" />
+          </button>
 
-        {/* Carousel Indicators */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
-          {bannerImages.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentBanner(index)}
-              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                index === currentBanner ? "bg-white w-8" : "bg-white/50 hover:bg-white/75"
-              }`}
-              aria-label={`Go to banner ${index + 1}`}
-            />
-          ))}
+          {/* Carousel Indicators */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
+            {banners.map((_: any, index: number) => (
+              <button
+                key={index}
+                onClick={() => setCurrentBanner(index)}
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  index === currentBanner ? "bg-white w-8" : "bg-white/50 hover:bg-white/75"
+                }`}
+                aria-label={`Go to banner ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Categories Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
