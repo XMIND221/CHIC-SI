@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import useSWR from "swr"
 import { Button } from "@/components/ui/button"
 import { ShoppingBag, Heart, MessageSquare, Loader2 } from "lucide-react"
 import { useCartStore } from "@/lib/cart-store"
@@ -30,29 +31,21 @@ type Product = {
   is_available: boolean
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
+
 export default function Boutique() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const {
+    data: products = [],
+    error,
+    isLoading,
+  } = useSWR("/api/products", fetcher, {
+    refreshInterval: 5000, // Auto-refresh every 5 seconds to catch admin changes
+    revalidateOnFocus: true, // Revalidate when user returns to tab
+  })
+
   const [wishlist, setWishlist] = useState<string[]>([])
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const { addItem } = useCartStore()
-
-  useEffect(() => {
-    fetchProducts()
-  }, [])
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch("/api/products")
-      const data = await response.json()
-      setProducts(data)
-    } catch (error) {
-      console.error("[v0] Error fetching products:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const toggleWishlist = (productId: string) => {
     setWishlist((prev) => (prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]))
@@ -67,12 +60,24 @@ export default function Boutique() {
     })
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <section id="boutique" className="py-24 md:py-32 bg-background">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-center h-96">
             <Loader2 className="w-8 h-8 animate-spin text-foreground" />
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section id="boutique" className="py-24 md:py-32 bg-background">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center py-12">
+            <p className="text-red-500">Erreur lors du chargement des produits</p>
           </div>
         </div>
       </section>
@@ -92,7 +97,7 @@ export default function Boutique() {
 
         {/* Products Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-          {products.map((product, index) => (
+          {products.map((product: Product, index: number) => (
             <div key={product.id} className="group animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
               {/* Image Container */}
               <div className="relative aspect-[3/4] mb-5 overflow-hidden rounded-sm">

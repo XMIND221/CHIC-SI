@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import useSWR, { mutate } from "swr"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,10 +37,19 @@ interface Product {
   material: string
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
+
 export default function AdminProductsPage() {
   const router = useRouter()
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const {
+    data: products = [],
+    error,
+    isLoading,
+  } = useSWR("/api/products/all", fetcher, {
+    refreshInterval: 0, // Don't auto-refresh
+    revalidateOnFocus: false, // Don't revalidate on window focus
+  })
+
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [formData, setFormData] = useState({
@@ -64,21 +74,7 @@ export default function AdminProductsPage() {
         return
       }
     }
-
-    fetchProducts()
   }, [router])
-
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch("/api/products/all")
-      const data = await response.json()
-      setProducts(data)
-    } catch (error) {
-      console.error("[v0] Error fetching products:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -131,14 +127,17 @@ export default function AdminProductsPage() {
         throw new Error(result.error || "Failed to save product")
       }
 
-      console.log("[v0] Product saved successfully!")
+      console.log("[v0] ✅ Product saved successfully!")
       alert(editingProduct ? "Produit modifié avec succès!" : "Produit ajouté avec succès!")
 
       setDialogOpen(false)
       resetForm()
-      await fetchProducts()
+
+      await mutate("/api/products/all")
+      await mutate("/api/products")
+      console.log("[v0] ✅ Data revalidated - changes will appear immediately!")
     } catch (error) {
-      console.error("[v0] Error saving product:", error)
+      console.error("[v0] ❌ Error saving product:", error)
       alert("Erreur lors de l'enregistrement du produit. Vérifiez la console.")
     }
   }
@@ -164,8 +163,13 @@ export default function AdminProductsPage() {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce produit ?")) return
 
     try {
-      await fetch(`/api/products/${id}`, { method: "DELETE" })
-      fetchProducts()
+      const response = await fetch(`/api/products/${id}`, { method: "DELETE" })
+      if (response.ok) {
+        console.log("[v0] ✅ Product deleted successfully!")
+        await mutate("/api/products/all")
+        await mutate("/api/products")
+        console.log("[v0] ✅ Data revalidated after deletion!")
+      }
     } catch (error) {
       console.error("[v0] Error deleting product:", error)
     }
@@ -356,9 +360,13 @@ export default function AdminProductsPage() {
           </Dialog>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Chargement des produits...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-red-500">Erreur lors du chargement des produits</p>
           </div>
         ) : products.length === 0 ? (
           <Card className="elegant-shadow">
@@ -374,7 +382,7 @@ export default function AdminProductsPage() {
           </Card>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {products.map((product) => (
+            {products.map((product: Product) => (
               <Card key={product.id} className="elegant-shadow hover:elegant-shadow-lg transition-all overflow-hidden">
                 <div className="aspect-square relative overflow-hidden bg-secondary/20">
                   <img
