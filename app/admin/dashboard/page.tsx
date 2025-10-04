@@ -8,7 +8,7 @@ import { Package, ShoppingBag, TrendingUp, Eye } from "lucide-react"
 
 export default function AdminDashboard() {
   const router = useRouter()
-  const [stats, setStats] = useState({
+  const [stats] = useState({
     totalProducts: 0,
     availableProducts: 0,
     featuredProducts: 0,
@@ -24,26 +24,7 @@ export default function AdminDashboard() {
         return
       }
     }
-
-    // Fetch stats
-    fetchStats()
   }, [router])
-
-  const fetchStats = async () => {
-    try {
-      const response = await fetch("/api/products")
-      const products = await response.json()
-
-      setStats({
-        totalProducts: products.length,
-        availableProducts: products.filter((p: any) => p.is_available).length,
-        featuredProducts: products.filter((p: any) => p.is_featured).length,
-        totalViews: products.reduce((sum: number, p: any) => sum + (p.review_count || 0), 0),
-      })
-    } catch (error) {
-      console.error("[v0] Error fetching stats:", error)
-    }
-  }
 
   const statCards = [
     {
