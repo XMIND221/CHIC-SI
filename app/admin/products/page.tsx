@@ -1,12 +1,14 @@
 "use client"
 
-import AdminGuard from "@/components/admin/admin-guard"
-import AdminLayout from "@/components/admin/admin-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import type React from "react"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { AdminLayout } from "@/components/admin/admin-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -16,79 +18,59 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Plus, Search, Edit, Trash2, Eye, Loader2 } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Switch } from "@/components/ui/switch"
+import { Plus, Pencil, Trash2, ImageIcon } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
-type Product = {
+interface Product {
   id: string
   name: string
   description: string
   price: number
-  category_id: string | null
   image_url: string
-  images: string[]
-  material: string
-  colors: string[]
-  sizes: string[]
-  stock_quantity: number
   is_available: boolean
   is_featured: boolean
-  rating: number
-  review_count: number
-  created_at: string
-  updated_at: string
+  stock_quantity: number
+  colors: string[]
+  sizes: string[]
+  material: string
 }
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "XAF",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-    .format(price)
-    .replace("XAF", "FCFA")
-}
-
-const getStatusBadge = (isAvailable: boolean, stock: number) => {
-  if (!isAvailable || stock === 0) {
-    return <Badge className="bg-red-100 text-red-800 border-red-200">Rupture</Badge>
-  }
-  if (stock < 10) {
-    return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Stock faible</Badge>
-  }
-  return <Badge className="bg-green-100 text-green-800 border-green-200">En stock</Badge>
-}
-
-export default function ProductsPage() {
+export default function AdminProductsPage() {
+  const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     price: "",
+    image_url: "",
     material: "",
     colors: "",
     sizes: "",
-    stock_quantity: "",
-    image_url: "",
+    stock_quantity: "10",
+    is_available: true,
+    is_featured: false,
   })
 
   useEffect(() => {
+    // Check authentication
+    if (typeof window !== "undefined") {
+      const isAuth = localStorage.getItem("admin_authenticated")
+      if (!isAuth) {
+        router.push("/admin")
+        return
+      }
+    }
+
     fetchProducts()
-  }, [])
+  }, [router])
 
   const fetchProducts = async () => {
     try {
-      setLoading(true)
-      const response = await fetch("/api/products")
+      const response = await fetch("/api/products/all")
       const data = await response.json()
       setProducts(data)
     } catch (error) {
@@ -98,495 +80,326 @@ export default function ProductsPage() {
     }
   }
 
-  const handleCreateProduct = async () => {
-    try {
-      const response = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          description: formData.description,
-          price: Number.parseFloat(formData.price),
-          material: formData.material,
-          colors: formData.colors.split(",").map((c) => c.trim()),
-          sizes: formData.sizes.split(",").map((s) => s.trim()),
-          stock_quantity: Number.parseInt(formData.stock_quantity),
-          image_url: formData.image_url || "/placeholder.svg",
-          is_available: true,
-          is_featured: false,
-        }),
-      })
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-      if (response.ok) {
-        await fetchProducts()
-        setIsAddDialogOpen(false)
-        setFormData({
-          name: "",
-          description: "",
-          price: "",
-          material: "",
-          colors: "",
-          sizes: "",
-          stock_quantity: "",
-          image_url: "",
+    const productData = {
+      name: formData.name,
+      description: formData.description,
+      price: Number.parseFloat(formData.price),
+      image_url: formData.image_url,
+      material: formData.material,
+      colors: formData.colors
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean),
+      sizes: formData.sizes
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      stock_quantity: Number.parseInt(formData.stock_quantity),
+      is_available: formData.is_available,
+      is_featured: formData.is_featured,
+    }
+
+    try {
+      if (editingProduct) {
+        // Update existing product
+        await fetch(`/api/products/${editingProduct.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productData),
         })
-        alert("Produit créé avec succès!")
+      } else {
+        // Create new product
+        await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productData),
+        })
       }
+
+      setDialogOpen(false)
+      resetForm()
+      fetchProducts()
     } catch (error) {
-      console.error("[v0] Error creating product:", error)
-      alert("Erreur lors de la création du produit")
+      console.error("[v0] Error saving product:", error)
     }
   }
 
-  const handleUpdateProduct = async () => {
-    if (!selectedProduct) return
-
-    try {
-      const response = await fetch(`/api/products/${selectedProduct.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          description: formData.description,
-          price: Number.parseFloat(formData.price),
-          material: formData.material,
-          colors: formData.colors.split(",").map((c) => c.trim()),
-          sizes: formData.sizes.split(",").map((s) => s.trim()),
-          stock_quantity: Number.parseInt(formData.stock_quantity),
-          image_url: formData.image_url,
-          is_available: selectedProduct.is_available,
-          is_featured: selectedProduct.is_featured,
-          category_id: selectedProduct.category_id,
-          images: selectedProduct.images,
-        }),
-      })
-
-      if (response.ok) {
-        await fetchProducts()
-        setIsEditDialogOpen(false)
-        setSelectedProduct(null)
-        alert("Produit modifié avec succès!")
-      }
-    } catch (error) {
-      console.error("[v0] Error updating product:", error)
-      alert("Erreur lors de la modification du produit")
-    }
-  }
-
-  const handleDeleteProduct = async (product: Product) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer "${product.name}" ?`)) return
-
-    try {
-      const response = await fetch(`/api/products/${product.id}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        await fetchProducts()
-        alert("Produit supprimé avec succès!")
-      }
-    } catch (error) {
-      console.error("[v0] Error deleting product:", error)
-      alert("Erreur lors de la suppression du produit")
-    }
-  }
-
-  const handleViewProduct = (product: Product) => {
-    setSelectedProduct(product)
-    setIsViewDialogOpen(true)
-  }
-
-  const handleEditProduct = (product: Product) => {
-    setSelectedProduct(product)
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product)
     setFormData({
       name: product.name,
-      description: product.description || "",
+      description: product.description,
       price: product.price.toString(),
+      image_url: product.image_url,
       material: product.material || "",
       colors: product.colors?.join(", ") || "",
       sizes: product.sizes?.join(", ") || "",
-      stock_quantity: product.stock_quantity.toString(),
-      image_url: product.image_url,
+      stock_quantity: product.stock_quantity?.toString() || "10",
+      is_available: product.is_available,
+      is_featured: product.is_featured,
     })
-    setIsEditDialogOpen(true)
+    setDialogOpen(true)
   }
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && product.is_available && product.stock_quantity >= 10) ||
-      (statusFilter === "low-stock" &&
-        product.is_available &&
-        product.stock_quantity < 10 &&
-        product.stock_quantity > 0) ||
-      (statusFilter === "out-of-stock" && (!product.is_available || product.stock_quantity === 0))
-    return matchesSearch && matchesStatus
-  })
+  const handleDelete = async (id: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce produit ?")) return
 
-  if (loading) {
-    return (
-      <AdminGuard>
-        <AdminLayout>
-          <div className="flex items-center justify-center h-96">
-            <Loader2 className="w-8 h-8 animate-spin text-rose-600" />
-          </div>
-        </AdminLayout>
-      </AdminGuard>
-    )
+    try {
+      await fetch(`/api/products/${id}`, { method: "DELETE" })
+      fetchProducts()
+    } catch (error) {
+      console.error("[v0] Error deleting product:", error)
+    }
+  }
+
+  const resetForm = () => {
+    setEditingProduct(null)
+    setFormData({
+      name: "",
+      description: "",
+      price: "",
+      image_url: "",
+      material: "",
+      colors: "",
+      sizes: "",
+      stock_quantity: "10",
+      is_available: true,
+      is_featured: false,
+    })
   }
 
   return (
-    <AdminGuard>
-      <AdminLayout>
-        <div className="space-y-8">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Gestion des produits</h1>
-              <p className="text-gray-600 mt-2">Gérez votre catalogue de produits Si-Chic</p>
-            </div>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-rose-600 hover:bg-rose-700 text-white">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ajouter un produit
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Ajouter un nouveau produit</DialogTitle>
-                  <DialogDescription>Créez un nouveau produit pour votre boutique</DialogDescription>
-                </DialogHeader>
-                <div className="grid grid-cols-2 gap-4 py-4">
-                  <div className="space-y-2 col-span-2">
-                    <Label htmlFor="name">Nom du produit *</Label>
-                    <Input
-                      id="name"
-                      placeholder="Ex: Hijab Soie Premium"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2 col-span-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Description du produit..."
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    />
-                  </div>
+    <AdminLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-serif font-bold">Produits</h1>
+            <p className="text-muted-foreground mt-2">Gérez votre catalogue de produits</p>
+          </div>
+          <Dialog
+            open={dialogOpen}
+            onOpenChange={(open) => {
+              setDialogOpen(open)
+              if (!open) resetForm()
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button size="lg" className="gap-2">
+                <Plus className="w-5 h-5" />
+                Ajouter un produit
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-serif">
+                  {editingProduct ? "Modifier le produit" : "Nouveau produit"}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingProduct
+                    ? "Modifiez les informations du produit"
+                    : "Ajoutez un nouveau produit à votre boutique"}
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nom du produit *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                    placeholder="Ex: Hijab en soie premium"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description *</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    required
+                    rows={3}
+                    placeholder="Décrivez le produit..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="price">Prix (FCFA) *</Label>
                     <Input
                       id="price"
                       type="number"
-                      placeholder="29518"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      required
+                      placeholder="15000"
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="stock">Stock *</Label>
                     <Input
                       id="stock"
                       type="number"
-                      placeholder="25"
                       value={formData.stock_quantity}
                       onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="material">Matériau</Label>
-                    <Input
-                      id="material"
-                      placeholder="Ex: Soie naturelle"
-                      value={formData.material}
-                      onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="colors">Couleurs (séparées par des virgules)</Label>
-                    <Input
-                      id="colors"
-                      placeholder="Ex: Rose poudré, Beige, Blanc cassé"
-                      value={formData.colors}
-                      onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sizes">Tailles (séparées par des virgules)</Label>
-                    <Input
-                      id="sizes"
-                      placeholder="Ex: S, M, L, XL"
-                      value={formData.sizes}
-                      onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="image_url">URL de l'image</Label>
-                    <Input
-                      id="image_url"
-                      placeholder="/image.jpg"
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                      required
+                      placeholder="10"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                    Annuler
-                  </Button>
-                  <Button className="bg-rose-600 hover:bg-rose-700 text-white" onClick={handleCreateProduct}>
-                    Créer le produit
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
 
-          {/* Filters */}
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder="Rechercher un produit..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue placeholder="Statut" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les statuts</SelectItem>
-                    <SelectItem value="active">En stock</SelectItem>
-                    <SelectItem value="low-stock">Stock faible</SelectItem>
-                    <SelectItem value="out-of-stock">Rupture</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Products Table */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle>Produits ({filteredProducts.length})</CardTitle>
-              <CardDescription>Liste de tous vos produits avec leurs informations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Produit</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Prix</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Stock</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Avis</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Statut</th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-900">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProducts.map((product) => (
-                      <tr key={product.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-4 px-4">
-                          <div className="flex items-center space-x-3">
-                            <img
-                              src={product.image_url || "/placeholder.svg"}
-                              alt={product.name}
-                              className="w-12 h-12 rounded-lg object-cover"
-                            />
-                            <div>
-                              <p className="font-medium text-gray-900">{product.name}</p>
-                              <p className="text-sm text-gray-500">{product.material}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <p className="font-medium text-gray-900">{formatPrice(product.price)}</p>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="text-gray-900">{product.stock_quantity}</span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center space-x-1">
-                            <span className="text-yellow-500">★</span>
-                            <span className="text-gray-900">
-                              {product.rating.toFixed(1)} ({product.review_count})
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">{getStatusBadge(product.is_available, product.stock_quantity)}</td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleViewProduct(product)}>
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleEditProduct(product)}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                              onClick={() => handleDeleteProduct(product)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* View Product Dialog */}
-          <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Détails du produit</DialogTitle>
-                <DialogDescription>Informations complètes du produit</DialogDescription>
-              </DialogHeader>
-              {selectedProduct && (
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={selectedProduct.image_url || "/placeholder.svg"}
-                      alt={selectedProduct.name}
-                      className="w-24 h-24 rounded-lg object-cover"
-                    />
-                    <div>
-                      <h3 className="text-xl font-semibold">{selectedProduct.name}</h3>
-                      <p className="text-gray-600">{selectedProduct.description}</p>
-                      <p className="text-lg font-medium text-rose-600">{formatPrice(selectedProduct.price)}</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Matériau</Label>
-                      <p className="text-gray-900">{selectedProduct.material}</p>
-                    </div>
-                    <div>
-                      <Label>Stock</Label>
-                      <p className="text-gray-900">{selectedProduct.stock_quantity} unités</p>
-                    </div>
-                    <div>
-                      <Label>Note</Label>
-                      <p className="text-gray-900">
-                        {selectedProduct.rating.toFixed(1)} ★ ({selectedProduct.review_count} avis)
-                      </p>
-                    </div>
-                    <div>
-                      <Label>Couleurs disponibles</Label>
-                      <p className="text-gray-900">{selectedProduct.colors?.join(", ")}</p>
-                    </div>
-                    <div>
-                      <Label>Tailles disponibles</Label>
-                      <p className="text-gray-900">{selectedProduct.sizes?.join(", ")}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
-
-          {/* Edit Product Dialog */}
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Modifier le produit</DialogTitle>
-                <DialogDescription>Modifiez les informations du produit</DialogDescription>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 py-4">
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="edit-name">Nom du produit</Label>
-                  <Input
-                    id="edit-name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="edit-description">Description</Label>
-                  <Textarea
-                    id="edit-description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
-                </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-price">Prix (FCFA)</Label>
+                  <Label htmlFor="image_url">URL de l'image *</Label>
                   <Input
-                    id="edit-price"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-stock">Stock</Label>
-                  <Input
-                    id="edit-stock"
-                    type="number"
-                    value={formData.stock_quantity}
-                    onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-material">Matériau</Label>
-                  <Input
-                    id="edit-material"
-                    value={formData.material}
-                    onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-colors">Couleurs (séparées par des virgules)</Label>
-                  <Input
-                    id="edit-colors"
-                    value={formData.colors}
-                    onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-sizes">Tailles (séparées par des virgules)</Label>
-                  <Input
-                    id="edit-sizes"
-                    value={formData.sizes}
-                    onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-image_url">URL de l'image</Label>
-                  <Input
-                    id="edit-image_url"
+                    id="image_url"
                     value={formData.image_url}
                     onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    required
+                    placeholder="https://..."
+                  />
+                  {formData.image_url && (
+                    <div className="mt-2 rounded-lg overflow-hidden border">
+                      <img
+                        src={formData.image_url || "/placeholder.svg"}
+                        alt="Preview"
+                        className="w-full h-48 object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="material">Matière</Label>
+                  <Input
+                    id="material"
+                    value={formData.material}
+                    onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                    placeholder="Ex: Soie, Coton, Polyester"
                   />
                 </div>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                  Annuler
-                </Button>
-                <Button className="bg-rose-600 hover:bg-rose-700 text-white" onClick={handleUpdateProduct}>
-                  Sauvegarder
-                </Button>
-              </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="colors">Couleurs (séparées par des virgules)</Label>
+                  <Input
+                    id="colors"
+                    value={formData.colors}
+                    onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
+                    placeholder="Ex: Noir, Blanc, Beige"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sizes">Tailles (séparées par des virgules)</Label>
+                  <Input
+                    id="sizes"
+                    value={formData.sizes}
+                    onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
+                    placeholder="Ex: S, M, L, XL"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="available">Disponible</Label>
+                    <p className="text-sm text-muted-foreground">Le produit est en stock</p>
+                  </div>
+                  <Switch
+                    id="available"
+                    checked={formData.is_available}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_available: checked })}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="featured">Produit vedette</Label>
+                    <p className="text-sm text-muted-foreground">Mettre en avant sur la page d'accueil</p>
+                  </div>
+                  <Switch
+                    id="featured"
+                    checked={formData.is_featured}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="flex-1">
+                    Annuler
+                  </Button>
+                  <Button type="submit" className="flex-1">
+                    {editingProduct ? "Mettre à jour" : "Ajouter"}
+                  </Button>
+                </div>
+              </form>
             </DialogContent>
           </Dialog>
         </div>
-      </AdminLayout>
-    </AdminGuard>
+
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Chargement des produits...</p>
+          </div>
+        ) : products.length === 0 ? (
+          <Card className="elegant-shadow">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <ImageIcon className="w-16 h-16 text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Aucun produit</h3>
+              <p className="text-muted-foreground mb-6">Commencez par ajouter votre premier produit</p>
+              <Button onClick={() => setDialogOpen(true)} className="gap-2">
+                <Plus className="w-5 h-5" />
+                Ajouter un produit
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {products.map((product) => (
+              <Card key={product.id} className="elegant-shadow hover:elegant-shadow-lg transition-all overflow-hidden">
+                <div className="aspect-square relative overflow-hidden bg-secondary/20">
+                  <img
+                    src={product.image_url || "/placeholder.svg"}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 right-3 flex gap-2">
+                    {product.is_featured && <Badge className="bg-primary text-primary-foreground">Vedette</Badge>}
+                    {!product.is_available && <Badge variant="secondary">Indisponible</Badge>}
+                  </div>
+                </div>
+                <CardHeader>
+                  <CardTitle className="line-clamp-1">{product.name}</CardTitle>
+                  <CardDescription className="line-clamp-2">{product.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-primary">{product.price.toLocaleString()} FCFA</span>
+                    <span className="text-sm text-muted-foreground">Stock: {product.stock_quantity}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-2 bg-transparent"
+                      onClick={() => handleEdit(product)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                      Modifier
+                    </Button>
+                    <Button variant="destructive" size="sm" className="gap-2" onClick={() => handleDelete(product.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </AdminLayout>
   )
 }
