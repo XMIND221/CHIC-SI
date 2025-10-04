@@ -4,15 +4,15 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Package, ShoppingBag, TrendingUp, Eye } from "lucide-react"
+import { Package, ShoppingBag, TrendingUp, Layers } from "lucide-react"
 
 export default function AdminDashboard() {
   const router = useRouter()
   const [stats, setStats] = useState({
     totalProducts: 0,
-    availableProducts: 0,
-    featuredProducts: 0,
-    totalViews: 0,
+    totalOrders: 0,
+    totalRevenue: 0,
+    activeCategories: 0,
   })
 
   useEffect(() => {
@@ -31,14 +31,14 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("/api/products")
-      const products = await response.json()
+      const response = await fetch("/api/admin/stats")
+      const data = await response.json()
 
       setStats({
-        totalProducts: products.length,
-        availableProducts: products.filter((p: any) => p.is_available).length,
-        featuredProducts: products.filter((p: any) => p.is_featured).length,
-        totalViews: products.reduce((sum: number, p: any) => sum + (p.review_count || 0), 0),
+        totalProducts: data.totalProducts || 0,
+        totalOrders: data.totalOrders || 0,
+        totalRevenue: data.totalRevenue || 0,
+        activeCategories: data.activeCategories || 0,
       })
     } catch (error) {
       console.error("[v0] Error fetching stats:", error)
@@ -55,26 +55,26 @@ export default function AdminDashboard() {
       bgColor: "bg-blue-50",
     },
     {
-      title: "Produits Disponibles",
-      value: stats.availableProducts,
-      description: "En stock actuellement",
+      title: "Commandes",
+      value: stats.totalOrders,
+      description: "Commandes reçues",
       icon: ShoppingBag,
       color: "text-green-600",
       bgColor: "bg-green-50",
     },
     {
-      title: "Produits Vedettes",
-      value: stats.featuredProducts,
-      description: "Mis en avant",
+      title: "Revenu Total",
+      value: `${stats.totalRevenue.toLocaleString()} FCFA`,
+      description: "Chiffre d'affaires",
       icon: TrendingUp,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
     {
-      title: "Total Avis",
-      value: stats.totalViews,
-      description: "Avis clients",
-      icon: Eye,
+      title: "Catégories",
+      value: stats.activeCategories,
+      description: "Collections actives",
+      icon: Layers,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
     },
