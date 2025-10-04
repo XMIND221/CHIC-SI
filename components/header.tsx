@@ -33,14 +33,14 @@ export default function Header() {
       <div className="relative overflow-hidden bg-gradient-to-r from-rose-600 via-rose-500 to-champagne-500 text-white py-4">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse"></div>
         <div className="relative flex items-center justify-center space-x-3">
-          <div className="flex items-center space-x-2 text-sm font-medium">
-            <Crown className="h-4 w-4" />
-            <span>{"✨ Atelier Sénégalais Premium • Livraison Express Gratuite • Service VIP 24/7"}</span>
-          </div>
+          <p className="text-sm font-medium tracking-wide">
+            ✨ Atelier Sénégalais Premium • Livraison Express Gratuite • Service VIP 24/7 ✨
+          </p>
+          <Crown className="w-4 h-4 text-yellow-200 animate-bounce" />
         </div>
       </div>
 
-      <div className="container mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <div className="flex-shrink-0">
             <Link href="/" className="group cursor-pointer">

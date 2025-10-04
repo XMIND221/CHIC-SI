@@ -11,10 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Checkbox } from "@/components/ui/checkbox"
 import { useCartStore } from "@/lib/cart-store"
-import { CreditCard, Smartphone, Building2, Shield, Truck, MapPin, User, ArrowLeft, UserPlus } from "lucide-react"
+import { Truck, MapPin, User, ArrowLeft, MessageCircle } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import Header from "@/components/header"
@@ -30,12 +28,12 @@ const formatPrice = (price: number) => {
     .replace("XAF", "FCFA")
 }
 
+const WHATSAPP_NUMBER = "221771234567" // Replace with actual Si-Chic WhatsApp number
+
 export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart } = useCartStore()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState("card")
-  const [createAccount, setCreateAccount] = useState(true)
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -47,8 +45,6 @@ export default function CheckoutPage() {
     postalCode: "",
     country: "Sénégal",
     notes: "",
-    password: "",
-    confirmPassword: "",
   })
 
   useEffect(() => {
@@ -64,41 +60,114 @@ export default function CheckoutPage() {
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleWhatsAppCheckout = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      if (createAccount) {
-        if (formData.password !== formData.confirmPassword) {
-          alert("Les mots de passe ne correspondent pas")
-          setIsLoading(false)
-          return
-        }
+      console.log("[v0] Starting WhatsApp checkout process")
 
-        const userData = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          postalCode: formData.postalCode,
-          country: formData.country,
-          createdAt: new Date().toISOString(),
-        }
-
-        localStorage.setItem("si-chic-user", JSON.stringify(userData))
-        console.log("Account created successfully:", userData)
+      // Save customer information to Supabase
+      const customerData = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone: formData.phone,
+        email: formData.email,
+        address: formData.address,
+        city: formData.city,
+        postal_code: formData.postalCode,
+        country: formData.country,
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      console.log("[v0] Saving customer data:", customerData)
 
+      // Save to Supabase profiles table
+      const response = await fetch("/api/customers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(customerData),
+      })
+
+      if (!response.ok) {
+        console.error("[v0] Failed to save customer data")
+      } else {
+        console.log("[v0] Customer data saved successfully")
+      }
+
+      // Create WhatsApp message with order details
+      const subtotal = getTotalPrice()
+      const shipping = subtotal > 100000 ? 0 : 5000
+      const total = subtotal + shipping
+
+      let message = `🌸 *NOUVELLE COMMANDE SI-CHIC* 🌸\n\n`
+      message += `👤 *INFORMATIONS CLIENT*\n`
+      message += `Nom: ${formData.firstName} ${formData.lastName}\n`
+      message += `Téléphone: ${formData.phone}\n`
+      message += `Email: ${formData.email}\n\n`
+
+      message += `📍 *ADRESSE DE LIVRAISON*\n`
+      message += `${formData.address}\n`
+      message += `${formData.city}, ${formData.postalCode}\n`
+      message += `${formData.country}\n\n`
+
+      if (formData.notes) {
+        message += `📝 *INSTRUCTIONS*\n${formData.notes}\n\n`
+      }
+
+      message += `🛍️ *DÉTAILS DE LA COMMANDE*\n`
+      message += `━━━━━━━━━━━━━━━━━━━━\n`
+
+      items.forEach((item, index) => {
+        message += `\n${index + 1}. *${item.name}*\n`
+        message += `   Quantité: ${item.quantity}\n`
+        message += `   Prix unitaire: ${formatPrice(item.price)}\n`
+        message += `   Sous-total: ${formatPrice(item.price * item.quantity)}\n`
+
+        if (item.size) {
+          message += `   Taille: ${item.size}\n`
+        }
+
+        if (item.color) {
+          message += `   Couleur: ${item.color}\n`
+        }
+
+        if (item.customMeasurements) {
+          message += `   ✨ *COMMANDE SUR MESURE*\n`
+          message += `   Tour de poitrine: ${item.customMeasurements.bust}cm\n`
+          message += `   Tour de taille: ${item.customMeasurements.waist}cm\n`
+          message += `   Tour de hanches: ${item.customMeasurements.hips}cm\n`
+          message += `   Longueur de bras: ${item.customMeasurements.armLength}cm\n`
+          message += `   Longueur totale: ${item.customMeasurements.length}cm\n`
+          if (item.customMeasurements.notes) {
+            message += `   Notes: ${item.customMeasurements.notes}\n`
+          }
+        }
+      })
+
+      message += `\n━━━━━━━━━━━━━━━━━━━━\n`
+      message += `💰 *RÉCAPITULATIF*\n`
+      message += `Sous-total: ${formatPrice(subtotal)}\n`
+      message += `Livraison: ${shipping === 0 ? "GRATUITE ✨" : formatPrice(shipping)}\n`
+      message += `*TOTAL: ${formatPrice(total)}*\n\n`
+      message += `Merci de confirmer cette commande ! 🙏`
+
+      console.log("[v0] WhatsApp message created, redirecting...")
+
+      // Encode message for URL
+      const encodedMessage = encodeURIComponent(message)
+      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`
+
+      // Clear cart and redirect to WhatsApp
       clearCart()
+      window.open(whatsappUrl, "_blank")
+
+      // Redirect to success page
       router.push("/checkout/success")
     } catch (error) {
-      console.error("Payment error:", error)
-      alert("Erreur lors du traitement de la commande")
+      console.error("[v0] WhatsApp checkout error:", error)
+      alert("Erreur lors de la préparation de la commande. Veuillez réessayer.")
     } finally {
       setIsLoading(false)
     }
@@ -130,60 +199,57 @@ export default function CheckoutPage() {
           <div className="space-y-8">
             <div>
               <h1 className="text-3xl font-serif text-gray-900 mb-2">Finaliser la commande</h1>
-              <p className="text-gray-600">
-                Remplissez vos informations pour finaliser votre achat et créer votre compte Si-Chic
-              </p>
+              <p className="text-gray-600">Remplissez vos informations pour finaliser votre achat via WhatsApp</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <Card>
+            <form onSubmit={handleWhatsAppCheckout} className="space-y-8">
+              <Card className="border-rose-200 bg-gradient-to-br from-rose-50 to-white">
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <User className="w-5 h-5 mr-2 text-rose-600" />
-                    Informations personnelles
+                  <CardTitle className="flex items-center text-rose-700">
+                    <User className="w-5 h-5 mr-2" />
+                    Vos informations
                   </CardTitle>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Ces informations seront utilisées pour créer votre compte Si-Chic
+                  </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">Prénom *</Label>
+                      <Label htmlFor="firstName" className="text-rose-700">
+                        Prénom *
+                      </Label>
                       <Input
                         id="firstName"
                         name="firstName"
                         required
                         value={formData.firstName}
                         onChange={handleInputChange}
-                        className="border-gray-200 focus:border-rose-300"
+                        className="border-rose-200 focus:border-rose-400 focus:ring-rose-400"
+                        placeholder="Votre prénom"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Nom *</Label>
+                      <Label htmlFor="lastName" className="text-rose-700">
+                        Nom *
+                      </Label>
                       <Input
                         id="lastName"
                         name="lastName"
                         required
                         value={formData.lastName}
                         onChange={handleInputChange}
-                        className="border-gray-200 focus:border-rose-300"
+                        className="border-rose-200 focus:border-rose-400 focus:ring-rose-400"
+                        placeholder="Votre nom"
                       />
                     </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className="border-gray-200 focus:border-rose-300"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Téléphone *</Label>
+                      <Label htmlFor="phone" className="text-rose-700">
+                        Téléphone *
+                      </Label>
                       <Input
                         id="phone"
                         name="phone"
@@ -191,74 +257,24 @@ export default function CheckoutPage() {
                         required
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className="border-gray-200 focus:border-rose-300"
+                        className="border-rose-200 focus:border-rose-400 focus:ring-rose-400"
                         placeholder="+221 XX XXX XX XX"
                       />
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <UserPlus className="w-5 h-5 mr-2 text-rose-600" />
-                    Création de votre compte Si-Chic
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="createAccount" checked={createAccount} onCheckedChange={setCreateAccount} />
-                    <Label
-                      htmlFor="createAccount"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Créer un compte pour suivre mes commandes et bénéficier d'avantages exclusifs
-                    </Label>
-                  </div>
-
-                  {createAccount && (
-                    <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
-                      <div className="space-y-2">
-                        <Label htmlFor="password">Mot de passe *</Label>
-                        <Input
-                          id="password"
-                          name="password"
-                          type="password"
-                          required={createAccount}
-                          value={formData.password}
-                          onChange={handleInputChange}
-                          className="border-gray-200 focus:border-rose-300"
-                          placeholder="Minimum 6 caractères"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">Confirmer le mot de passe *</Label>
-                        <Input
-                          id="confirmPassword"
-                          name="confirmPassword"
-                          type="password"
-                          required={createAccount}
-                          value={formData.confirmPassword}
-                          onChange={handleInputChange}
-                          className="border-gray-200 focus:border-rose-300"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="bg-rose-50 p-4 rounded-lg border border-rose-200">
-                    <div className="flex items-start space-x-2">
-                      <UserPlus className="w-5 h-5 text-rose-600 mt-0.5" />
-                      <div className="text-sm text-rose-800">
-                        <p className="font-medium mb-1">Avantages de votre compte Si-Chic :</p>
-                        <ul className="list-disc list-inside space-y-1 text-xs">
-                          <li>Suivi de vos commandes en temps réel</li>
-                          <li>Historique de vos achats</li>
-                          <li>Offres exclusives et ventes privées</li>
-                          <li>Programme de fidélité</li>
-                        </ul>
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-rose-700">
+                        Email *
+                      </Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className="border-rose-200 focus:border-rose-400 focus:ring-rose-400"
+                        placeholder="votre@email.com"
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -296,6 +312,7 @@ export default function CheckoutPage() {
                         value={formData.city}
                         onChange={handleInputChange}
                         className="border-gray-200 focus:border-rose-300"
+                        placeholder="Dakar"
                       />
                     </div>
                     <div className="space-y-2">
@@ -336,91 +353,46 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <CreditCard className="w-5 h-5 mr-2 text-rose-600" />
-                    Mode de paiement
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50">
-                      <RadioGroupItem value="card" id="card" />
-                      <Label htmlFor="card" className="flex items-center flex-1 cursor-pointer">
-                        <CreditCard className="w-5 h-5 mr-3 text-gray-600" />
-                        <div>
-                          <p className="font-medium">Carte bancaire</p>
-                          <p className="text-sm text-gray-500">Visa, Mastercard</p>
-                        </div>
-                      </Label>
-                      <Badge variant="secondary" className="bg-green-100 text-green-800">
-                        Sécurisé
-                      </Badge>
+              <Card className="border-green-200 bg-gradient-to-br from-green-50 to-white">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                      <MessageCircle className="w-6 h-6 text-white" />
                     </div>
-
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50">
-                      <RadioGroupItem value="orange" id="orange" />
-                      <Label htmlFor="orange" className="flex items-center flex-1 cursor-pointer">
-                        <Smartphone className="w-5 h-5 mr-3 text-orange-600" />
-                        <div>
-                          <p className="font-medium">Orange Money</p>
-                          <p className="text-sm text-gray-500">Paiement mobile</p>
-                        </div>
-                      </Label>
-                    </div>
-
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50">
-                      <RadioGroupItem value="wave" id="wave" />
-                      <Label htmlFor="wave" className="flex items-center flex-1 cursor-pointer">
-                        <Smartphone className="w-5 h-5 mr-3 text-blue-600" />
-                        <div>
-                          <p className="font-medium">Wave</p>
-                          <p className="text-sm text-gray-500">Paiement mobile</p>
-                        </div>
-                      </Label>
-                    </div>
-
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50">
-                      <RadioGroupItem value="bank" id="bank" />
-                      <Label htmlFor="bank" className="flex items-center flex-1 cursor-pointer">
-                        <Building2 className="w-5 h-5 mr-3 text-gray-600" />
-                        <div>
-                          <p className="font-medium">Virement bancaire</p>
-                          <p className="text-sm text-gray-500">Paiement à la livraison disponible</p>
-                        </div>
-                      </Label>
-                    </div>
-                  </RadioGroup>
-
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex items-center">
-                      <Shield className="w-5 h-5 text-blue-600 mr-2" />
-                      <p className="text-sm text-blue-800">
-                        Tous vos paiements sont sécurisés et cryptés. Vos données bancaires ne sont jamais stockées.
-                      </p>
+                    <div>
+                      <h3 className="font-semibold text-lg">Commande via WhatsApp</h3>
+                      <p className="text-sm text-gray-600">Finalisez votre commande directement avec notre équipe</p>
                     </div>
                   </div>
+
+                  <div className="bg-white p-4 rounded-lg border border-green-200 mb-4">
+                    <p className="text-sm text-gray-700 mb-2">✅ Confirmation instantanée de votre commande</p>
+                    <p className="text-sm text-gray-700 mb-2">
+                      ✅ Paiement sécurisé à la livraison ou par mobile money
+                    </p>
+                    <p className="text-sm text-gray-700 mb-2">✅ Service client personnalisé</p>
+                    <p className="text-sm text-gray-700">✅ Création automatique de votre compte Si-Chic</p>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-6 text-lg font-semibold"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        Préparation...
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle className="w-5 h-5 mr-2" />
+                        Commander via WhatsApp - {formatPrice(total)}
+                      </>
+                    )}
+                  </Button>
                 </CardContent>
               </Card>
-
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-rose-600 hover:bg-rose-700 text-white py-4 text-lg"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Traitement en cours...
-                  </>
-                ) : (
-                  <>
-                    <Shield className="w-5 h-5 mr-2" />
-                    Finaliser la commande - {formatPrice(total)}
-                  </>
-                )}
-              </Button>
             </form>
           </div>
 
@@ -446,6 +418,11 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm line-clamp-2">{item.name}</h4>
+                        {item.customMeasurements && (
+                          <Badge variant="secondary" className="mt-1 bg-amber-100 text-amber-800 text-xs">
+                            ✨ Sur Mesure
+                          </Badge>
+                        )}
                         <p className="text-sm text-gray-600">{formatPrice(item.price * item.quantity)}</p>
                       </div>
                     </div>
@@ -479,8 +456,8 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 pt-4">
-                  <Shield className="w-4 h-4" />
-                  <span>Paiement 100% sécurisé</span>
+                  <MessageCircle className="w-4 h-4 text-green-600" />
+                  <span>Commande via WhatsApp</span>
                 </div>
               </CardContent>
             </Card>
