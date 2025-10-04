@@ -1,23 +1,21 @@
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import HeroLogo from "@/components/hero-logo"
+import Boutique from "@/components/boutique"
 import Categories from "@/components/categories"
-import Products from "@/components/products"
 import About from "@/components/about"
-import LogoMosaic from "@/components/logo-mosaic"
-import BackgroundCarousel from "@/components/background-carousel"
+import Contact from "@/components/contact"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white relative">
-      <BackgroundCarousel />
+    <div className="min-h-screen bg-background">
       <Header />
       <main>
         <HeroLogo />
+        <Boutique />
         <Categories />
-        <Products />
-        <LogoMosaic />
         <About />
+        <Contact />
       </main>
       <Footer />
     </div>

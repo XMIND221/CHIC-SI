@@ -11,7 +11,7 @@ const categories = [
     description: "Soie, mousseline et tissus nobles",
     itemCount: 45,
     startingPrice: "19 023 FCFA",
-    image: "/placeholder-i7q4m.png",
+    image: "/luxury-silk-hijab-collection.jpg",
     badge: "Bestseller",
   },
   {
@@ -35,7 +35,7 @@ const categories = [
     description: "Confort et performance réunis",
     itemCount: 18,
     startingPrice: "25 582 FCFA",
-    image: "/placeholder-4uq5v.png",
+    image: "/modest-athletic-wear-hijab-sports.jpg",
     badge: "Éco-responsable",
   },
 ]
@@ -77,28 +77,25 @@ export default function Categories() {
   }
 
   return (
-    <section className="py-8 sm:py-12 lg:py-16 bg-gradient-to-b from-white to-gray-50/30">
-      <div className="relative mb-12 carousel-container">
-        <div className="relative h-96 overflow-hidden">
+    <section id="collections" className="py-16 bg-gradient-to-b from-stone-50 to-background">
+      {/* Banner Carousel */}
+      <div className="relative mb-16 overflow-hidden">
+        <div className="relative h-[400px] md:h-[500px]">
           {bannerImages.map((banner, index) => (
             <div
               key={index}
-              className={`absolute inset-0 transition-transform duration-500 ease-in-out carousel-slide ${
-                index === currentBanner
-                  ? "translate-x-0"
-                  : index < currentBanner
-                    ? "-translate-x-full"
-                    : "translate-x-full"
+              className={`absolute inset-0 transition-all duration-700 ease-in-out ${
+                index === currentBanner ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"
               }`}
             >
               <img src={banner.image || "/placeholder.svg"} alt={banner.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
               <div className="absolute inset-0 flex items-center justify-center text-center">
                 <div className="max-w-4xl mx-auto px-4">
-                  <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 animate-crystal-float drop-shadow-2xl [text-shadow:_2px_2px_8px_rgb(0_0_0_/_80%)]">
+                  <h2 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 drop-shadow-2xl">
                     {banner.title}
                   </h2>
-                  <p className="text-xl sm:text-2xl text-white max-w-3xl mx-auto leading-relaxed drop-shadow-xl [text-shadow:_1px_1px_4px_rgb(0_0_0_/_70%)]">
+                  <p className="text-xl sm:text-2xl text-white/95 max-w-3xl mx-auto leading-relaxed drop-shadow-xl">
                     {banner.subtitle}
                   </p>
                 </div>
@@ -110,54 +107,64 @@ export default function Categories() {
         {/* Carousel Controls */}
         <button
           onClick={prevBanner}
-          className="absolute left-4 top-1/2 -translate-y-1/2 glass-effect p-2 rounded-full hover:bg-white/20 transition-all duration-300"
+          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm p-3 rounded-full hover:bg-white/30 transition-all duration-300 border border-white/30"
+          aria-label="Previous banner"
         >
           <ChevronLeft className="w-6 h-6 text-white" />
         </button>
         <button
           onClick={nextBanner}
-          className="absolute right-4 top-1/2 -translate-y-1/2 glass-effect p-2 rounded-full hover:bg-white/20 transition-all duration-300"
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm p-3 rounded-full hover:bg-white/30 transition-all duration-300 border border-white/30"
+          aria-label="Next banner"
         >
           <ChevronRight className="w-6 h-6 text-white" />
         </button>
 
         {/* Carousel Indicators */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
           {bannerImages.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentBanner(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 carousel-indicator ${
-                index === currentBanner ? "active" : ""
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                index === currentBanner ? "bg-white w-8" : "bg-white/50 hover:bg-white/75"
               }`}
+              aria-label={`Go to banner ${index + 1}`}
             />
           ))}
         </div>
       </div>
 
+      {/* Categories Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="text-center mb-12">
+          <h2 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-4">Nos Collections</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Découvrez nos collections soigneusement sélectionnées pour chaque occasion
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {categories.map((category, index) => (
             <div
               key={index}
-              className="group relative glass-card rounded-xl sm:rounded-2xl overflow-hidden luxury-shadow hover:immersive-shadow transition-all duration-500 animate-crystal-float animate-glass-shine"
-              style={{ animationDelay: `${index * 0.2}s` }}
+              className="group relative bg-card rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 border border-border"
             >
-              <div className="aspect-[16/10] sm:aspect-[4/3] overflow-hidden">
+              <div className="aspect-[4/3] overflow-hidden">
                 <img
                   src={category.image || "/placeholder.svg"}
                   alt={category.name}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute top-4 left-4">
                   <Badge
                     variant="secondary"
-                    className={`text-xs sm:text-sm crystal-shadow glass-effect
-                      ${category.badge === "Bestseller" ? "bg-orange-100/80 text-orange-800 border-orange-200/50" : ""}
-                      ${category.badge === "Nouveau" ? "bg-green-100/80 text-green-800 border-green-200/50" : ""}
-                      ${category.badge === "Premium" ? "bg-purple-100/80 text-purple-800 border-purple-200/50" : ""}
-                      ${category.badge === "Éco-responsable" ? "bg-emerald-100/80 text-emerald-800 border-emerald-200/50" : ""}
+                    className={`text-sm shadow-lg backdrop-blur-sm
+                      ${category.badge === "Bestseller" ? "bg-orange-100/90 text-orange-800 border-orange-200" : ""}
+                      ${category.badge === "Nouveau" ? "bg-green-100/90 text-green-800 border-green-200" : ""}
+                      ${category.badge === "Premium" ? "bg-purple-100/90 text-purple-800 border-purple-200" : ""}
+                      ${category.badge === "Éco-responsable" ? "bg-emerald-100/90 text-emerald-800 border-emerald-200" : ""}
                     `}
                   >
                     {category.badge}
@@ -165,19 +172,17 @@ export default function Categories() {
                 </div>
               </div>
 
-              <div className="p-4 sm:p-6">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 leading-tight">{category.name}</h3>
-                <p className="text-gray-700 text-sm mb-3 sm:mb-4 leading-relaxed">{category.description}</p>
+              <div className="p-6">
+                <h3 className="text-xl font-semibold text-foreground mb-2 leading-tight">{category.name}</h3>
+                <p className="text-muted-foreground text-sm mb-4 leading-relaxed">{category.description}</p>
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 space-y-1 sm:space-y-0">
-                  <div className="text-xs sm:text-sm text-gray-600 font-medium">{category.itemCount} articles</div>
-                  <div className="text-base sm:text-lg font-bold text-primary">
-                    À partir de {category.startingPrice}
-                  </div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-sm text-muted-foreground font-medium">{category.itemCount} articles</div>
+                  <div className="text-lg font-bold text-primary">À partir de {category.startingPrice}</div>
                 </div>
 
-                <Button className="w-full luxury-gradient hover:shadow-lg text-white font-semibold crystal-shadow transform hover:scale-105 transition-all duration-300">
-                  Découvrir la collection
+                <Button className="w-full bg-gradient-to-r from-primary via-amber-400 to-rose-400 hover:opacity-90 text-white font-semibold shadow-md hover:shadow-lg transition-all">
+                  Découvrir
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
