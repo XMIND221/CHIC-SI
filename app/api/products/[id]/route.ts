@@ -24,26 +24,30 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     console.log("[v0] ===== PUT REQUEST START =====")
     console.log("[v0] Product ID:", params.id)
 
-    const supabase = createAdminClient()
-    console.log("[v0] Admin client created successfully")
+    let supabase
+    try {
+      supabase = createAdminClient()
+    } catch (clientError: any) {
+      console.error("[v0] ❌ Failed to create admin client:", clientError.message)
+      return NextResponse.json({ error: "Server configuration error", details: clientError.message }, { status: 500 })
+    }
 
     const body = await request.json()
     console.log("[v0] Request body:", JSON.stringify(body, null, 2))
 
     const updateData: any = {
+      name: body.name,
+      description: body.description,
+      price: body.price,
+      image_url: body.image_url,
+      material: body.material || "",
+      colors: body.colors || [],
+      sizes: body.sizes || [],
+      stock_quantity: body.stock_quantity,
+      is_available: body.is_available,
+      is_featured: body.is_featured,
       updated_at: new Date().toISOString(),
     }
-
-    if (body.name !== undefined) updateData.name = body.name
-    if (body.description !== undefined) updateData.description = body.description
-    if (body.price !== undefined) updateData.price = body.price
-    if (body.image_url !== undefined) updateData.image_url = body.image_url
-    if (body.material !== undefined) updateData.material = body.material
-    if (body.colors !== undefined) updateData.colors = body.colors
-    if (body.sizes !== undefined) updateData.sizes = body.sizes
-    if (body.stock_quantity !== undefined) updateData.stock_quantity = body.stock_quantity
-    if (body.is_available !== undefined) updateData.is_available = body.is_available
-    if (body.is_featured !== undefined) updateData.is_featured = body.is_featured
 
     console.log("[v0] Update data prepared:", JSON.stringify(updateData, null, 2))
     console.log("[v0] Calling Supabase update...")
