@@ -21,14 +21,15 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
-    console.log("[v0] PUT request for product ID:", params.id)
+    console.log("[v0] ===== PUT REQUEST START =====")
+    console.log("[v0] Product ID:", params.id)
 
     const supabase = createAdminClient()
+    console.log("[v0] Admin client created successfully")
+
     const body = await request.json()
+    console.log("[v0] Request body:", JSON.stringify(body, null, 2))
 
-    console.log("[v0] Update data received:", body)
-
-    // Build update object with only provided fields
     const updateData: any = {
       updated_at: new Date().toISOString(),
     }
@@ -44,7 +45,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (body.is_available !== undefined) updateData.is_available = body.is_available
     if (body.is_featured !== undefined) updateData.is_featured = body.is_featured
 
-    console.log("[v0] Updating product with data:", updateData)
+    console.log("[v0] Update data prepared:", JSON.stringify(updateData, null, 2))
+    console.log("[v0] Calling Supabase update...")
 
     const { data: product, error } = await supabase
       .from("products")
@@ -54,15 +56,20 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       .single()
 
     if (error) {
-      console.error("[v0] Supabase error updating product:", error)
-      return NextResponse.json({ error: error.message || "Failed to update product" }, { status: 500 })
+      console.error("[v0] ❌ SUPABASE ERROR:", JSON.stringify(error, null, 2))
+      return NextResponse.json({ error: error.message || "Failed to update product", details: error }, { status: 500 })
     }
 
-    console.log("[v0] Product updated successfully:", product)
+    console.log("[v0] ✅ Product updated successfully!")
+    console.log("[v0] Updated product:", JSON.stringify(product, null, 2))
+    console.log("[v0] ===== PUT REQUEST END =====")
+
     return NextResponse.json(product)
-  } catch (error) {
-    console.error("[v0] Product PUT error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  } catch (error: any) {
+    console.error("[v0] ❌ EXCEPTION in PUT:", error)
+    console.error("[v0] Error message:", error?.message)
+    console.error("[v0] Error stack:", error?.stack)
+    return NextResponse.json({ error: "Internal server error", details: error?.message }, { status: 500 })
   }
 }
 
