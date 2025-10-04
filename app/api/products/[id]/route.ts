@@ -5,10 +5,14 @@ export async function GET(request: Request, { params }: { params: { id: string }
   try {
     const supabase = createAdminClient()
 
-    const { data: product, error } = await supabase.from("products").select("*").eq("id", params.id).single()
+    const { data: product, error } = await supabase.from("products").select("*").eq("id", params.id).maybeSingle()
 
     if (error) {
       console.error("[v0] Error fetching product:", error)
+      return NextResponse.json({ error: "Product not found" }, { status: 404 })
+    }
+
+    if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 })
     }
 
@@ -52,16 +56,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     console.log("[v0] Update data prepared:", JSON.stringify(updateData, null, 2))
     console.log("[v0] Calling Supabase update...")
 
-    const { data: product, error } = await supabase
-      .from("products")
-      .update(updateData)
-      .eq("id", params.id)
-      .select()
-      .single()
+    const { data: products, error } = await supabase.from("products").update(updateData).eq("id", params.id).select()
 
     if (error) {
       console.error("[v0] ❌ SUPABASE ERROR:", JSON.stringify(error, null, 2))
       return NextResponse.json({ error: error.message || "Failed to update product", details: error }, { status: 500 })
+    }
+
+    const product = products?.[0]
+    if (!product) {
+      console.error("[v0] ❌ Product not found after update")
+      return NextResponse.json({ error: "Product not found" }, { status: 404 })
     }
 
     console.log("[v0] ✅ Product updated successfully!")

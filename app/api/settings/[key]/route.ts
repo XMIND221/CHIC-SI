@@ -11,9 +11,13 @@ export async function PUT(request: Request, { params }: { params: { key: string 
       .update({ value, updated_at: new Date().toISOString() })
       .eq("key", params.key)
       .select()
-      .single()
+      .maybeSingle()
 
     if (error) throw error
+
+    if (!data) {
+      return NextResponse.json({ error: "Setting not found" }, { status: 404 })
+    }
 
     return NextResponse.json(data)
   } catch (error) {

@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
     console.log("[v0] Product data received:", body)
 
-    const { data: product, error } = await supabase
+    const { data: products, error } = await supabase
       .from("products")
       .insert([
         {
@@ -53,13 +53,13 @@ export async function POST(request: Request) {
         },
       ])
       .select()
-      .single()
 
     if (error) {
       console.error("[v0] Supabase error creating product:", error)
       return NextResponse.json({ error: error.message || "Failed to create product" }, { status: 500 })
     }
 
+    const product = products?.[0]
     console.log("[v0] Product created successfully:", product)
     return NextResponse.json(product)
   } catch (error) {
