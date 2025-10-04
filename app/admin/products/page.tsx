@@ -17,90 +17,28 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Search, Edit, Trash2, Eye } from "lucide-react"
-import { useState } from "react"
+import { Plus, Search, Edit, Trash2, Eye, Loader2 } from "lucide-react"
+import { useState, useEffect } from "react"
 
-const products = [
-  {
-    id: 1,
-    name: "Blazer Professionnel Élégant",
-    price: 58380,
-    originalPrice: 78715,
-    category: "Professionnel",
-    stock: 15,
-    status: "active",
-    image: "/hijabi-woman-blazer.png",
-    badge: "Bestseller",
-    material: "Laine mélangée",
-    colors: ["Noir", "Marine", "Gris"],
-    sales: 45,
-  },
-  {
-    id: 2,
-    name: "Hijab Soie Premium",
-    price: 29518,
-    category: "Hijabs",
-    stock: 32,
-    status: "active",
-    image: "/luxury-silk-hijab.png",
-    badge: "Premium",
-    material: "Soie naturelle",
-    colors: ["Rose poudré", "Beige", "Blanc cassé"],
-    sales: 38,
-  },
-  {
-    id: 3,
-    name: "Abaya Moderne Cintrée",
-    price: 81995,
-    category: "Abayas",
-    stock: 8,
-    status: "low-stock",
-    image: "/modern-fitted-abaya.png",
-    badge: "Nouveau",
-    material: "Crêpe premium",
-    colors: ["Noir", "Taupe", "Bordeaux"],
-    sales: 29,
-  },
-  {
-    id: 4,
-    name: "Ensemble Sport Confort",
-    price: 42637,
-    category: "Sport",
-    stock: 0,
-    status: "out-of-stock",
-    image: "/modest-sportswear-hijab.png",
-    badge: "Éco-responsable",
-    material: "Coton bio",
-    colors: ["Gris chiné", "Marine", "Rose"],
-    sales: 52,
-  },
-  {
-    id: 5,
-    name: "Pantalon Tailleur Chic",
-    price: 36078,
-    category: "Professionnel",
-    stock: 22,
-    status: "active",
-    image: "/chic-tailored-trousers-women.png",
-    badge: "Bestseller",
-    material: "Polyester stretch",
-    colors: ["Noir", "Marine", "Camel"],
-    sales: 67,
-  },
-  {
-    id: 6,
-    name: "Tunique Longue Raffinée",
-    price: 49197,
-    category: "Tuniques",
-    stock: 18,
-    status: "active",
-    image: "/placeholder.svg?height=400&width=300",
-    badge: "Premium",
-    material: "Viscose fluide",
-    colors: ["Blanc", "Beige", "Kaki"],
-    sales: 23,
-  },
-]
+type Product = {
+  id: string
+  name: string
+  description: string
+  price: number
+  category_id: string | null
+  image_url: string
+  images: string[]
+  material: string
+  colors: string[]
+  sizes: string[]
+  stock_quantity: number
+  is_available: boolean
+  is_featured: boolean
+  rating: number
+  review_count: number
+  created_at: string
+  updated_at: string
+}
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat("fr-FR", {
@@ -113,51 +51,190 @@ const formatPrice = (price: number) => {
     .replace("XAF", "FCFA")
 }
 
-const getStatusBadge = (status: string, stock: number) => {
-  if (status === "out-of-stock" || stock === 0) {
+const getStatusBadge = (isAvailable: boolean, stock: number) => {
+  if (!isAvailable || stock === 0) {
     return <Badge className="bg-red-100 text-red-800 border-red-200">Rupture</Badge>
   }
-  if (status === "low-stock" || stock < 10) {
+  if (stock < 10) {
     return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Stock faible</Badge>
   }
   return <Badge className="bg-green-100 text-green-800 border-green-200">En stock</Badge>
 }
 
 export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    material: "",
+    colors: "",
+    sizes: "",
+    stock_quantity: "",
+    image_url: "",
+  })
 
-  const handleViewProduct = (product: any) => {
-    console.log("[v0] Viewing product:", product.name)
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/products")
+      const data = await response.json()
+      setProducts(data)
+    } catch (error) {
+      console.error("[v0] Error fetching products:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateProduct = async () => {
+    try {
+      const response = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          price: Number.parseFloat(formData.price),
+          material: formData.material,
+          colors: formData.colors.split(",").map((c) => c.trim()),
+          sizes: formData.sizes.split(",").map((s) => s.trim()),
+          stock_quantity: Number.parseInt(formData.stock_quantity),
+          image_url: formData.image_url || "/placeholder.svg",
+          is_available: true,
+          is_featured: false,
+        }),
+      })
+
+      if (response.ok) {
+        await fetchProducts()
+        setIsAddDialogOpen(false)
+        setFormData({
+          name: "",
+          description: "",
+          price: "",
+          material: "",
+          colors: "",
+          sizes: "",
+          stock_quantity: "",
+          image_url: "",
+        })
+        alert("Produit créé avec succès!")
+      }
+    } catch (error) {
+      console.error("[v0] Error creating product:", error)
+      alert("Erreur lors de la création du produit")
+    }
+  }
+
+  const handleUpdateProduct = async () => {
+    if (!selectedProduct) return
+
+    try {
+      const response = await fetch(`/api/products/${selectedProduct.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          price: Number.parseFloat(formData.price),
+          material: formData.material,
+          colors: formData.colors.split(",").map((c) => c.trim()),
+          sizes: formData.sizes.split(",").map((s) => s.trim()),
+          stock_quantity: Number.parseInt(formData.stock_quantity),
+          image_url: formData.image_url,
+          is_available: selectedProduct.is_available,
+          is_featured: selectedProduct.is_featured,
+          category_id: selectedProduct.category_id,
+          images: selectedProduct.images,
+        }),
+      })
+
+      if (response.ok) {
+        await fetchProducts()
+        setIsEditDialogOpen(false)
+        setSelectedProduct(null)
+        alert("Produit modifié avec succès!")
+      }
+    } catch (error) {
+      console.error("[v0] Error updating product:", error)
+      alert("Erreur lors de la modification du produit")
+    }
+  }
+
+  const handleDeleteProduct = async (product: Product) => {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer "${product.name}" ?`)) return
+
+    try {
+      const response = await fetch(`/api/products/${product.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        await fetchProducts()
+        alert("Produit supprimé avec succès!")
+      }
+    } catch (error) {
+      console.error("[v0] Error deleting product:", error)
+      alert("Erreur lors de la suppression du produit")
+    }
+  }
+
+  const handleViewProduct = (product: Product) => {
     setSelectedProduct(product)
     setIsViewDialogOpen(true)
   }
 
-  const handleEditProduct = (product: any) => {
-    console.log("[v0] Editing product:", product.name)
+  const handleEditProduct = (product: Product) => {
     setSelectedProduct(product)
+    setFormData({
+      name: product.name,
+      description: product.description || "",
+      price: product.price.toString(),
+      material: product.material || "",
+      colors: product.colors?.join(", ") || "",
+      sizes: product.sizes?.join(", ") || "",
+      stock_quantity: product.stock_quantity.toString(),
+      image_url: product.image_url,
+    })
     setIsEditDialogOpen(true)
-  }
-
-  const handleDeleteProduct = (product: any) => {
-    console.log("[v0] Deleting product:", product.name)
-    if (confirm(`Êtes-vous sûr de vouloir supprimer "${product.name}" ?`)) {
-      // Ici vous pouvez ajouter la logique de suppression
-      alert(`Produit "${product.name}" supprimé avec succès`)
-    }
   }
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = categoryFilter === "all" || product.category === categoryFilter
-    const matchesStatus = statusFilter === "all" || product.status === statusFilter
-    return matchesSearch && matchesCategory && matchesStatus
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active" && product.is_available && product.stock_quantity >= 10) ||
+      (statusFilter === "low-stock" &&
+        product.is_available &&
+        product.stock_quantity < 10 &&
+        product.stock_quantity > 0) ||
+      (statusFilter === "out-of-stock" && (!product.is_available || product.stock_quantity === 0))
+    return matchesSearch && matchesStatus
   })
+
+  if (loading) {
+    return (
+      <AdminGuard>
+        <AdminLayout>
+          <div className="flex items-center justify-center h-96">
+            <Loader2 className="w-8 h-8 animate-spin text-rose-600" />
+          </div>
+        </AdminLayout>
+      </AdminGuard>
+    )
+  }
 
   return (
     <AdminGuard>
@@ -176,57 +253,94 @@ export default function ProductsPage() {
                   Ajouter un produit
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Ajouter un nouveau produit</DialogTitle>
                   <DialogDescription>Créez un nouveau produit pour votre boutique</DialogDescription>
                 </DialogHeader>
                 <div className="grid grid-cols-2 gap-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nom du produit</Label>
-                    <Input id="name" placeholder="Ex: Hijab Soie Premium" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Catégorie</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une catégorie" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="hijabs">Hijabs</SelectItem>
-                        <SelectItem value="abayas">Abayas</SelectItem>
-                        <SelectItem value="professionnel">Professionnel</SelectItem>
-                        <SelectItem value="sport">Sport</SelectItem>
-                        <SelectItem value="tuniques">Tuniques</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Prix (FCFA)</Label>
-                    <Input id="price" type="number" placeholder="29518" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="stock">Stock</Label>
-                    <Input id="stock" type="number" placeholder="25" />
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="name">Nom du produit *</Label>
+                    <Input
+                      id="name"
+                      placeholder="Ex: Hijab Soie Premium"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2 col-span-2">
                     <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" placeholder="Description du produit..." />
+                    <Textarea
+                      id="description"
+                      placeholder="Description du produit..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Prix (FCFA) *</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      placeholder="29518"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stock">Stock *</Label>
+                    <Input
+                      id="stock"
+                      type="number"
+                      placeholder="25"
+                      value={formData.stock_quantity}
+                      onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="material">Matériau</Label>
-                    <Input id="material" placeholder="Ex: Soie naturelle" />
+                    <Input
+                      id="material"
+                      placeholder="Ex: Soie naturelle"
+                      value={formData.material}
+                      onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="colors">Couleurs disponibles</Label>
-                    <Input id="colors" placeholder="Ex: Rose poudré, Beige, Blanc cassé" />
+                    <Label htmlFor="colors">Couleurs (séparées par des virgules)</Label>
+                    <Input
+                      id="colors"
+                      placeholder="Ex: Rose poudré, Beige, Blanc cassé"
+                      value={formData.colors}
+                      onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sizes">Tailles (séparées par des virgules)</Label>
+                    <Input
+                      id="sizes"
+                      placeholder="Ex: S, M, L, XL"
+                      value={formData.sizes}
+                      onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="image_url">URL de l'image</Label>
+                    <Input
+                      id="image_url"
+                      placeholder="/image.jpg"
+                      value={formData.image_url}
+                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    />
                   </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     Annuler
                   </Button>
-                  <Button className="bg-rose-600 hover:bg-rose-700 text-white">Créer le produit</Button>
+                  <Button className="bg-rose-600 hover:bg-rose-700 text-white" onClick={handleCreateProduct}>
+                    Créer le produit
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -245,19 +359,6 @@ export default function ProductsPage() {
                     className="pl-10"
                   />
                 </div>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue placeholder="Catégorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toutes les catégories</SelectItem>
-                    <SelectItem value="Hijabs">Hijabs</SelectItem>
-                    <SelectItem value="Abayas">Abayas</SelectItem>
-                    <SelectItem value="Professionnel">Professionnel</SelectItem>
-                    <SelectItem value="Sport">Sport</SelectItem>
-                    <SelectItem value="Tuniques">Tuniques</SelectItem>
-                  </SelectContent>
-                </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full sm:w-48">
                     <SelectValue placeholder="Statut" />
@@ -285,10 +386,9 @@ export default function ProductsPage() {
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Produit</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Catégorie</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Prix</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Stock</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Ventes</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Avis</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Statut</th>
                       <th className="text-right py-3 px-4 font-medium text-gray-900">Actions</th>
                     </tr>
@@ -299,50 +399,31 @@ export default function ProductsPage() {
                         <td className="py-4 px-4">
                           <div className="flex items-center space-x-3">
                             <img
-                              src={product.image || "/placeholder.svg"}
+                              src={product.image_url || "/placeholder.svg"}
                               alt={product.name}
                               className="w-12 h-12 rounded-lg object-cover"
                             />
                             <div>
                               <p className="font-medium text-gray-900">{product.name}</p>
                               <p className="text-sm text-gray-500">{product.material}</p>
-                              {product.badge && (
-                                <Badge
-                                  variant="secondary"
-                                  className={`mt-1 text-xs ${
-                                    product.badge === "Bestseller"
-                                      ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                                      : product.badge === "Premium"
-                                        ? "bg-purple-100 text-purple-800 border-purple-200"
-                                        : product.badge === "Nouveau"
-                                          ? "bg-green-100 text-green-800 border-green-200"
-                                          : "bg-emerald-100 text-emerald-800 border-emerald-200"
-                                  }`}
-                                >
-                                  {product.badge}
-                                </Badge>
-                              )}
                             </div>
                           </div>
                         </td>
                         <td className="py-4 px-4">
-                          <span className="text-gray-900">{product.category}</span>
+                          <p className="font-medium text-gray-900">{formatPrice(product.price)}</p>
                         </td>
                         <td className="py-4 px-4">
-                          <div>
-                            <p className="font-medium text-gray-900">{formatPrice(product.price)}</p>
-                            {product.originalPrice && (
-                              <p className="text-sm text-gray-500 line-through">{formatPrice(product.originalPrice)}</p>
-                            )}
+                          <span className="text-gray-900">{product.stock_quantity}</span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center space-x-1">
+                            <span className="text-yellow-500">★</span>
+                            <span className="text-gray-900">
+                              {product.rating.toFixed(1)} ({product.review_count})
+                            </span>
                           </div>
                         </td>
-                        <td className="py-4 px-4">
-                          <span className="text-gray-900">{product.stock}</span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="text-gray-900">{product.sales}</span>
-                        </td>
-                        <td className="py-4 px-4">{getStatusBadge(product.status, product.stock)}</td>
+                        <td className="py-4 px-4">{getStatusBadge(product.is_available, product.stock_quantity)}</td>
                         <td className="py-4 px-4">
                           <div className="flex items-center justify-end space-x-2">
                             <Button variant="ghost" size="sm" onClick={() => handleViewProduct(product)}>
@@ -380,13 +461,13 @@ export default function ProductsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center space-x-4">
                     <img
-                      src={selectedProduct.image || "/placeholder.svg"}
+                      src={selectedProduct.image_url || "/placeholder.svg"}
                       alt={selectedProduct.name}
                       className="w-24 h-24 rounded-lg object-cover"
                     />
                     <div>
                       <h3 className="text-xl font-semibold">{selectedProduct.name}</h3>
-                      <p className="text-gray-600">{selectedProduct.category}</p>
+                      <p className="text-gray-600">{selectedProduct.description}</p>
                       <p className="text-lg font-medium text-rose-600">{formatPrice(selectedProduct.price)}</p>
                     </div>
                   </div>
@@ -397,15 +478,21 @@ export default function ProductsPage() {
                     </div>
                     <div>
                       <Label>Stock</Label>
-                      <p className="text-gray-900">{selectedProduct.stock} unités</p>
+                      <p className="text-gray-900">{selectedProduct.stock_quantity} unités</p>
                     </div>
                     <div>
-                      <Label>Ventes</Label>
-                      <p className="text-gray-900">{selectedProduct.sales} vendus</p>
+                      <Label>Note</Label>
+                      <p className="text-gray-900">
+                        {selectedProduct.rating.toFixed(1)} ★ ({selectedProduct.review_count} avis)
+                      </p>
                     </div>
                     <div>
                       <Label>Couleurs disponibles</Label>
                       <p className="text-gray-900">{selectedProduct.colors?.join(", ")}</p>
+                    </div>
+                    <div>
+                      <Label>Tailles disponibles</Label>
+                      <p className="text-gray-900">{selectedProduct.sizes?.join(", ")}</p>
                     </div>
                   </div>
                 </div>
@@ -415,61 +502,84 @@ export default function ProductsPage() {
 
           {/* Edit Product Dialog */}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Modifier le produit</DialogTitle>
                 <DialogDescription>Modifiez les informations du produit</DialogDescription>
               </DialogHeader>
-              {selectedProduct && (
-                <div className="grid grid-cols-2 gap-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-name">Nom du produit</Label>
-                    <Input id="edit-name" defaultValue={selectedProduct.name} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-category">Catégorie</Label>
-                    <Select defaultValue={selectedProduct.category.toLowerCase()}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="hijabs">Hijabs</SelectItem>
-                        <SelectItem value="abayas">Abayas</SelectItem>
-                        <SelectItem value="professionnel">Professionnel</SelectItem>
-                        <SelectItem value="sport">Sport</SelectItem>
-                        <SelectItem value="tuniques">Tuniques</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-price">Prix (FCFA)</Label>
-                    <Input id="edit-price" type="number" defaultValue={selectedProduct.price} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-stock">Stock</Label>
-                    <Input id="edit-stock" type="number" defaultValue={selectedProduct.stock} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-material">Matériau</Label>
-                    <Input id="edit-material" defaultValue={selectedProduct.material} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-colors">Couleurs disponibles</Label>
-                    <Input id="edit-colors" defaultValue={selectedProduct.colors?.join(", ")} />
-                  </div>
+              <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="edit-name">Nom du produit</Label>
+                  <Input
+                    id="edit-name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
                 </div>
-              )}
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-price">Prix (FCFA)</Label>
+                  <Input
+                    id="edit-price"
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-stock">Stock</Label>
+                  <Input
+                    id="edit-stock"
+                    type="number"
+                    value={formData.stock_quantity}
+                    onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-material">Matériau</Label>
+                  <Input
+                    id="edit-material"
+                    value={formData.material}
+                    onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-colors">Couleurs (séparées par des virgules)</Label>
+                  <Input
+                    id="edit-colors"
+                    value={formData.colors}
+                    onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-sizes">Tailles (séparées par des virgules)</Label>
+                  <Input
+                    id="edit-sizes"
+                    value={formData.sizes}
+                    onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-image_url">URL de l'image</Label>
+                  <Input
+                    id="edit-image_url"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                  />
+                </div>
+              </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                   Annuler
                 </Button>
-                <Button
-                  className="bg-rose-600 hover:bg-rose-700 text-white"
-                  onClick={() => {
-                    alert(`Produit "${selectedProduct?.name}" modifié avec succès`)
-                    setIsEditDialogOpen(false)
-                  }}
-                >
+                <Button className="bg-rose-600 hover:bg-rose-700 text-white" onClick={handleUpdateProduct}>
                   Sauvegarder
                 </Button>
               </div>

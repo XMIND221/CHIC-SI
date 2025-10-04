@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ShoppingBag, Heart, MessageSquare } from "lucide-react"
+import { ShoppingBag, Heart, MessageSquare, Loader2 } from "lucide-react"
 import { useCartStore } from "@/lib/cart-store"
 import Image from "next/image"
 import WhatsAppOrderModal from "./whatsapp-order-modal"
@@ -18,110 +18,65 @@ const formatPrice = (price: number) => {
     .replace("XAF", "FCFA")
 }
 
-const categories = [
-  { id: "all", name: "Tout" },
-  { id: "hijabs", name: "Hijabs" },
-  { id: "abayas", name: "Abayas" },
-  { id: "ensembles", name: "Ensembles" },
-  { id: "sport", name: "Sport" },
-  { id: "ceremonie", name: "Cérémonie" },
-]
-
-const products = [
-  {
-    id: 1,
-    name: "Hijab Soie Premium Bordeaux",
-    price: 25000,
-    image: "/elegant-bordeaux-silk-hijab.jpg",
-    category: "hijabs",
-    material: "Soie naturelle",
-  },
-  {
-    id: 2,
-    name: "Abaya Moderne Noire Brodée",
-    price: 85000,
-    image: "/modern-black-embroidered-abaya.jpg",
-    category: "abayas",
-    material: "Crêpe de luxe",
-  },
-  {
-    id: 3,
-    name: "Ensemble Professionnel Beige",
-    price: 65000,
-    image: "/professional-beige-hijab-outfit.jpg",
-    category: "ensembles",
-    material: "Polyester premium",
-  },
-  {
-    id: 4,
-    name: "Hijab Sport Respirant Rose",
-    price: 18000,
-    image: "/breathable-pink-sports-hijab.jpg",
-    category: "sport",
-    material: "Polyester recyclé",
-  },
-  {
-    id: 5,
-    name: "Abaya Cérémonie Dorée",
-    price: 120000,
-    image: "/golden-ceremony-abaya-elegant.jpg",
-    category: "ceremonie",
-    material: "Satin brodé or",
-  },
-  {
-    id: 6,
-    name: "Hijab Mousseline Bleu Ciel",
-    price: 22000,
-    image: "/sky-blue-chiffon-hijab-flowing.jpg",
-    category: "hijabs",
-    material: "Mousseline de soie",
-  },
-  {
-    id: 7,
-    name: "Abaya Quotidienne Grise",
-    price: 55000,
-    image: "/elegant-grey-daily-abaya-modest-fashion.jpg",
-    category: "abayas",
-    material: "Jersey premium",
-  },
-  {
-    id: 8,
-    name: "Ensemble Sport Complet Noir",
-    price: 45000,
-    image: "/black-sports-hijab-outfit-athletic-wear.jpg",
-    category: "sport",
-    material: "Tissu technique",
-  },
-  {
-    id: 9,
-    name: "Hijab Satin Champagne",
-    price: 28000,
-    image: "/champagne-satin-hijab-luxury-fabric.jpg",
-    category: "hijabs",
-    material: "Satin de soie",
-  },
-]
+type Product = {
+  id: string
+  name: string
+  description: string
+  price: number
+  image_url: string
+  material: string
+  colors: string[]
+  stock_quantity: number
+  is_available: boolean
+}
 
 export default function Boutique() {
-  const [selectedCategory, setSelectedCategory] = useState("all")
-  const [wishlist, setWishlist] = useState<number[]>([])
-  const [selectedProduct, setSelectedProduct] = useState<(typeof products)[0] | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [wishlist, setWishlist] = useState<string[]>([])
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const { addItem } = useCartStore()
 
-  const filteredProducts =
-    selectedCategory === "all" ? products : products.filter((p) => p.category === selectedCategory)
+  useEffect(() => {
+    fetchProducts()
+  }, [])
 
-  const toggleWishlist = (productId: number) => {
+  const fetchProducts = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/products")
+      const data = await response.json()
+      setProducts(data)
+    } catch (error) {
+      console.error("[v0] Error fetching products:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const toggleWishlist = (productId: string) => {
     setWishlist((prev) => (prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]))
   }
 
-  const handleAddToCart = (product: (typeof products)[0]) => {
+  const handleAddToCart = (product: Product) => {
     addItem({
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.image,
+      image: product.image_url,
     })
+  }
+
+  if (loading) {
+    return (
+      <section id="boutique" className="py-24 md:py-32 bg-background">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-center h-96">
+            <Loader2 className="w-8 h-8 animate-spin text-foreground" />
+          </div>
+        </div>
+      </section>
+    )
   }
 
   return (
@@ -135,34 +90,14 @@ export default function Boutique() {
           </p>
         </div>
 
-        {/* Category Filter */}
-        <div className="mb-12 flex flex-wrap justify-center gap-3">
-          {categories.map((category) => (
-            <Button
-              key={category.id}
-              variant={selectedCategory === category.id ? "default" : "outline"}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`
-                ${
-                  selectedCategory === category.id
-                    ? "bg-foreground text-background hover:bg-foreground/90"
-                    : "bg-transparent hover:bg-muted"
-                }
-              `}
-            >
-              {category.name}
-            </Button>
-          ))}
-        </div>
-
         {/* Products Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-          {filteredProducts.map((product, index) => (
+          {products.map((product, index) => (
             <div key={product.id} className="group animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
               {/* Image Container */}
               <div className="relative aspect-[3/4] mb-5 overflow-hidden rounded-sm">
                 <Image
-                  src={product.image || "/placeholder.svg"}
+                  src={product.image_url || "/placeholder.svg"}
                   alt={product.name}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-700"
@@ -204,6 +139,10 @@ export default function Boutique() {
                 <p className="text-xs uppercase tracking-wider text-muted-foreground">{product.material}</p>
                 <h3 className="text-lg font-medium text-foreground leading-snug">{product.name}</h3>
                 <p className="text-xl font-semibold text-foreground">{formatPrice(product.price)}</p>
+                {product.stock_quantity < 10 && product.stock_quantity > 0 && (
+                  <p className="text-sm text-amber-600">Plus que {product.stock_quantity} en stock</p>
+                )}
+                {product.stock_quantity === 0 && <p className="text-sm text-red-600">Rupture de stock</p>}
               </div>
             </div>
           ))}
