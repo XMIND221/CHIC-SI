@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { data: product, error } = await supabase.from("products").select("*").eq("id", params.id).single()
 
@@ -23,7 +23,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   try {
     console.log("[v0] PUT request for product ID:", params.id)
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const body = await request.json()
 
     console.log("[v0] Update data received:", body)
@@ -68,7 +68,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { error } = await supabase.from("products").delete().eq("id", params.id)
 

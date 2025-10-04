@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function GET() {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { data: products, error } = await supabase
       .from("products")
@@ -25,8 +25,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
+    console.log("[v0] POST request to create product")
+
+    const supabase = createAdminClient()
     const body = await request.json()
+
+    console.log("[v0] Product data received:", body)
 
     const { data: product, error } = await supabase
       .from("products")
@@ -52,10 +56,11 @@ export async function POST(request: Request) {
       .single()
 
     if (error) {
-      console.error("[v0] Error creating product:", error)
-      return NextResponse.json({ error: "Failed to create product" }, { status: 500 })
+      console.error("[v0] Supabase error creating product:", error)
+      return NextResponse.json({ error: error.message || "Failed to create product" }, { status: 500 })
     }
 
+    console.log("[v0] Product created successfully:", product)
     return NextResponse.json(product)
   } catch (error) {
     console.error("[v0] Products POST error:", error)
