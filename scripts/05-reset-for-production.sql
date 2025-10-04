@@ -1,33 +1,27 @@
 -- Script de réinitialisation pour la production
--- Ce script supprime toutes les données de test et prépare le site pour la production
+-- Ce script vide toutes les données de test et prépare le site pour la production
 
--- Supprimer toutes les données de test
+-- Vider les tables dans le bon ordre (en respectant les contraintes de clés étrangères)
 DELETE FROM order_items;
 DELETE FROM orders;
 DELETE FROM favorites;
 DELETE FROM products;
 DELETE FROM categories;
 DELETE FROM banners;
-DELETE FROM profiles WHERE id != '00000000-0000-0000-0000-000000000000';
 DELETE FROM admin_sms_codes;
 
--- Réinitialiser les paramètres du site avec les vraies informations
-DELETE FROM site_settings;
+-- Réinitialiser les compteurs
+-- Note: Les UUID ne nécessitent pas de réinitialisation de séquence
 
-INSERT INTO site_settings (key, value, label, description, category) VALUES
-  ('site_name', 'Si-Chic', 'Nom du site', 'Nom de la boutique', 'general'),
-  ('site_description', 'Boutique de mode élégante', 'Description du site', 'Description de la boutique', 'general'),
-  ('contact_phone', '+221 78 462 49 91', 'Téléphone', 'Numéro WhatsApp de contact', 'contact'),
-  ('contact_email', 'contact@sichic.com', 'Email', 'Email de contact', 'contact'),
-  ('contact_address', 'Dakar, Sénégal', 'Adresse', 'Adresse physique', 'contact'),
-  ('hero_title', 'Si-Chic', 'Titre Hero', 'Titre principal de la page d''accueil', 'homepage'),
-  ('hero_subtitle', 'Élégance & Raffinement', 'Sous-titre Hero', 'Sous-titre de la page d''accueil', 'homepage'),
-  ('about_title', 'À Propos de Si-Chic', 'Titre À Propos', 'Titre de la section À Propos', 'about'),
-  ('about_description', 'Si-Chic est votre destination pour la mode élégante et raffinée. Nous proposons une sélection soigneusement choisie de vêtements et accessoires qui allient style et qualité.', 'Description À Propos', 'Description de la boutique', 'about');
+-- Insérer des catégories de base
+INSERT INTO categories (id, name, description, image_url, created_at, updated_at) VALUES
+  (gen_random_uuid(), 'Robes', 'Collection de robes élégantes', '/placeholder.svg?height=400&width=600', NOW(), NOW()),
+  (gen_random_uuid(), 'Ensembles', 'Ensembles coordonnés', '/placeholder.svg?height=400&width=600', NOW(), NOW()),
+  (gen_random_uuid(), 'Accessoires', 'Accessoires de mode', '/placeholder.svg?height=400&width=600', NOW(), NOW());
 
--- Créer une catégorie par défaut
-INSERT INTO categories (name, description, image_url) VALUES
-  ('Nouvelle Collection', 'Découvrez nos dernières créations', '/placeholder.svg?height=400&width=600');
+-- Insérer une bannière de bienvenue
+INSERT INTO banners (id, title, subtitle, image_url, display_order, is_active, created_at, updated_at) VALUES
+  (gen_random_uuid(), 'Bienvenue chez Si-Chic', 'Découvrez notre nouvelle collection', '/placeholder.svg?height=600&width=1200', 1, true, NOW(), NOW());
 
 -- Message de confirmation
 SELECT 'Base de données réinitialisée avec succès pour la production!' as message;
