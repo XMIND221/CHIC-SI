@@ -102,28 +102,44 @@ export default function AdminProductsPage() {
       is_featured: formData.is_featured,
     }
 
+    console.log("[v0] Submitting product:", editingProduct ? "UPDATE" : "CREATE", productData)
+
     try {
+      let response
       if (editingProduct) {
         // Update existing product
-        await fetch(`/api/products/${editingProduct.id}`, {
+        console.log("[v0] Updating product ID:", editingProduct.id)
+        response = await fetch(`/api/products/${editingProduct.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(productData),
         })
       } else {
         // Create new product
-        await fetch("/api/products", {
+        console.log("[v0] Creating new product")
+        response = await fetch("/api/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(productData),
         })
       }
 
+      const result = await response.json()
+      console.log("[v0] API Response:", result)
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to save product")
+      }
+
+      console.log("[v0] Product saved successfully!")
+      alert(editingProduct ? "Produit modifié avec succès!" : "Produit ajouté avec succès!")
+
       setDialogOpen(false)
       resetForm()
-      fetchProducts()
+      await fetchProducts()
     } catch (error) {
       console.error("[v0] Error saving product:", error)
+      alert("Erreur lors de l'enregistrement du produit. Vérifiez la console.")
     }
   }
 

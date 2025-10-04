@@ -21,35 +21,44 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
+    console.log("[v0] PUT request for product ID:", params.id)
+
     const supabase = await createClient()
     const body = await request.json()
 
+    console.log("[v0] Update data received:", body)
+
+    // Build update object with only provided fields
+    const updateData: any = {
+      updated_at: new Date().toISOString(),
+    }
+
+    if (body.name !== undefined) updateData.name = body.name
+    if (body.description !== undefined) updateData.description = body.description
+    if (body.price !== undefined) updateData.price = body.price
+    if (body.image_url !== undefined) updateData.image_url = body.image_url
+    if (body.material !== undefined) updateData.material = body.material
+    if (body.colors !== undefined) updateData.colors = body.colors
+    if (body.sizes !== undefined) updateData.sizes = body.sizes
+    if (body.stock_quantity !== undefined) updateData.stock_quantity = body.stock_quantity
+    if (body.is_available !== undefined) updateData.is_available = body.is_available
+    if (body.is_featured !== undefined) updateData.is_featured = body.is_featured
+
+    console.log("[v0] Updating product with data:", updateData)
+
     const { data: product, error } = await supabase
       .from("products")
-      .update({
-        name: body.name,
-        description: body.description,
-        price: body.price,
-        category_id: body.category_id,
-        image_url: body.image_url,
-        images: body.images,
-        material: body.material,
-        colors: body.colors,
-        sizes: body.sizes,
-        stock_quantity: body.stock_quantity,
-        is_available: body.is_available,
-        is_featured: body.is_featured,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", params.id)
       .select()
       .single()
 
     if (error) {
-      console.error("[v0] Error updating product:", error)
-      return NextResponse.json({ error: "Failed to update product" }, { status: 500 })
+      console.error("[v0] Supabase error updating product:", error)
+      return NextResponse.json({ error: error.message || "Failed to update product" }, { status: 500 })
     }
 
+    console.log("[v0] Product updated successfully:", product)
     return NextResponse.json(product)
   } catch (error) {
     console.error("[v0] Product PUT error:", error)
