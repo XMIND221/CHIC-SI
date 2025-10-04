@@ -5,7 +5,7 @@ import type React from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Package, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, Package, LogOut, Menu, X, Settings } from "lucide-react"
 import { useState } from "react"
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +20,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const navigation = [
     { name: "Tableau de Bord", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Produits", href: "/admin/products", icon: Package },
+    { name: "Paramètres", href: "/admin/settings", icon: Settings },
   ]
 
   return (

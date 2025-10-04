@@ -166,7 +166,7 @@ export default function Boutique() {
             className="bg-foreground hover:bg-foreground/90 text-background text-base h-12 px-8"
             asChild
           >
-            <a href="https://wa.me/221777223755" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/221784624991" target="_blank" rel="noopener noreferrer">
               Commander sur WhatsApp
             </a>
           </Button>

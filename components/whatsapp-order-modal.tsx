@@ -22,7 +22,7 @@ interface WhatsAppOrderModalProps {
   onClose: () => void
 }
 
-const WHATSAPP_NUMBER = "221777223755"
+const WHATSAPP_NUMBER = "221784624991"
 
 export default function WhatsAppOrderModal({ product, onClose }: WhatsAppOrderModalProps) {
   const [formData, setFormData] = useState({

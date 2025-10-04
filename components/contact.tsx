@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 
 export default function Contact() {
-  const whatsappNumber = "+221777223755"
+  const whatsappNumber = "+221784624991"
   const whatsappMessage = encodeURIComponent(
     "Bonjour Si-Chic, je souhaite obtenir plus d'informations sur vos produits.",
   )
@@ -35,7 +35,7 @@ export default function Contact() {
             </div>
             <h3 className="font-semibold text-lg mb-2">Téléphone</h3>
             <a href={`tel:${whatsappNumber}`} className="text-muted-foreground text-sm hover:text-primary">
-              +221 77 722 37 55
+              +221 78 462 49 91
             </a>
           </Card>
 

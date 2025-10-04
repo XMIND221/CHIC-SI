@@ -33,12 +33,12 @@ export default function HeroLogo() {
             <div className="pt-8 space-y-3">
               <p className="text-sm text-muted-foreground uppercase tracking-wider">Besoin d'aide ?</p>
               <a
-                href="https://wa.me/221777223755"
+                href="https://wa.me/221784624991"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-lg font-medium text-foreground hover:text-primary transition-colors inline-block"
               >
-                WhatsApp: +221 77 722 37 55
+                WhatsApp: +221 78 462 49 91
               </a>
             </div>
           </div>
