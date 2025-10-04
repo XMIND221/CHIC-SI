@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Plus, Pencil, Trash2, ImageIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { updateProduct, createProduct, deleteProduct } from "./actions"
 
 interface Product {
   id: string
@@ -46,12 +47,13 @@ export default function AdminProductsPage() {
     error,
     isLoading,
   } = useSWR("/api/products/all", fetcher, {
-    refreshInterval: 0, // Don't auto-refresh
-    revalidateOnFocus: false, // Don't revalidate on window focus
+    refreshInterval: 5000, // Auto-refresh every 5 seconds to show updates
+    revalidateOnFocus: true,
   })
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -78,6 +80,7 @@ export default function AdminProductsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSaving(true)
 
     const productData = {
       name: formData.name,
@@ -98,47 +101,38 @@ export default function AdminProductsPage() {
       is_featured: formData.is_featured,
     }
 
-    console.log("[v0] Submitting product:", editingProduct ? "UPDATE" : "CREATE", productData)
+    console.log("[v0] Submitting product:", editingProduct ? "UPDATE" : "CREATE")
 
     try {
-      let response
+      let result
       if (editingProduct) {
-        // Update existing product
-        console.log("[v0] Updating product ID:", editingProduct.id)
-        response = await fetch(`/api/products/${editingProduct.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(productData),
-        })
+        console.log("[v0] Calling updateProduct server action...")
+        result = await updateProduct(editingProduct.id, productData)
       } else {
-        // Create new product
-        console.log("[v0] Creating new product")
-        response = await fetch("/api/products", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(productData),
-        })
+        console.log("[v0] Calling createProduct server action...")
+        result = await createProduct(productData)
       }
 
-      const result = await response.json()
-      console.log("[v0] API Response:", result)
+      console.log("[v0] Server action result:", result)
 
-      if (!response.ok) {
+      if (!result.success) {
         throw new Error(result.error || "Failed to save product")
       }
 
       console.log("[v0] ✅ Product saved successfully!")
-      alert(editingProduct ? "Produit modifié avec succès!" : "Produit ajouté avec succès!")
+      alert(editingProduct ? "✅ Produit modifié avec succès!" : "✅ Produit ajouté avec succès!")
 
       setDialogOpen(false)
       resetForm()
 
       await mutate("/api/products/all")
       await mutate("/api/products")
-      console.log("[v0] ✅ Data revalidated - changes will appear immediately!")
-    } catch (error) {
+      console.log("[v0] ✅ Data revalidated!")
+    } catch (error: any) {
       console.error("[v0] ❌ Error saving product:", error)
-      alert("Erreur lors de l'enregistrement du produit. Vérifiez la console.")
+      alert(`❌ Erreur: ${error.message}`)
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -163,15 +157,21 @@ export default function AdminProductsPage() {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce produit ?")) return
 
     try {
-      const response = await fetch(`/api/products/${id}`, { method: "DELETE" })
-      if (response.ok) {
-        console.log("[v0] ✅ Product deleted successfully!")
-        await mutate("/api/products/all")
-        await mutate("/api/products")
-        console.log("[v0] ✅ Data revalidated after deletion!")
+      console.log("[v0] Calling deleteProduct server action...")
+      const result = await deleteProduct(id)
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to delete product")
       }
-    } catch (error) {
-      console.error("[v0] Error deleting product:", error)
+
+      console.log("[v0] ✅ Product deleted successfully!")
+      alert("✅ Produit supprimé avec succès!")
+
+      await mutate("/api/products/all")
+      await mutate("/api/products")
+    } catch (error: any) {
+      console.error("[v0] ❌ Error deleting product:", error)
+      alert(`❌ Erreur: ${error.message}`)
     }
   }
 
@@ -348,11 +348,17 @@ export default function AdminProductsPage() {
                 </div>
 
                 <div className="flex gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="flex-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)}
+                    className="flex-1"
+                    disabled={isSaving}
+                  >
                     Annuler
                   </Button>
-                  <Button type="submit" className="flex-1">
-                    {editingProduct ? "Mettre à jour" : "Ajouter"}
+                  <Button type="submit" className="flex-1" disabled={isSaving}>
+                    {isSaving ? "Enregistrement..." : editingProduct ? "Mettre à jour" : "Ajouter"}
                   </Button>
                 </div>
               </form>
