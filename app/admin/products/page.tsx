@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Plus, Pencil, Trash2, ImageIcon, ArrowLeft } from "lucide-react"
+import { Plus, Pencil, Trash2, ImageIcon, ArrowLeft, Upload } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { updateProduct, createProduct, deleteProduct } from "./actions"
 
@@ -54,6 +54,7 @@ export default function AdminProductsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -175,6 +176,35 @@ export default function AdminProductsPage() {
     }
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error("Upload failed")
+      }
+
+      const data = await response.json()
+      setFormData((prev) => ({ ...prev, image_url: data.url }))
+      alert("✅ Image uploadée avec succès!")
+    } catch (error) {
+      console.error("Upload error:", error)
+      alert("❌ Erreur lors de l'upload de l'image")
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
   const resetForm = () => {
     setEditingProduct(null)
     setFormData({
@@ -280,22 +310,42 @@ export default function AdminProductsPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="image_url">URL de l'image *</Label>
-                  <Input
-                    id="image_url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    required
-                    placeholder="https://..."
-                  />
-                  {formData.image_url && (
-                    <div className="mt-2 rounded-lg overflow-hidden border">
-                      <img
-                        src={formData.image_url || "/placeholder.svg"}
-                        alt="Preview"
-                        className="w-full h-48 object-cover"
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={isUploading}
+                        className="hidden"
+                        id="image-upload"
                       />
+                      <Label
+                        htmlFor="image-upload"
+                        className="flex-1 flex items-center justify-center gap-2 h-10 px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md cursor-pointer transition-colors"
+                      >
+                        <Upload className="w-4 h-4" />
+                        {isUploading ? "Upload en cours..." : "Uploader une image"}
+                      </Label>
                     </div>
-                  )}
+                    <div className="text-center text-sm text-muted-foreground">ou</div>
+                    <Input
+                      id="image_url"
+                      value={formData.image_url}
+                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                      required
+                      placeholder="Entrez l'URL de l'image"
+                    />
+                    {formData.image_url && (
+                      <div className="mt-2 rounded-lg overflow-hidden border">
+                        <img
+                          src={formData.image_url || "/placeholder.svg"}
+                          alt="Preview"
+                          className="w-full h-48 object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
