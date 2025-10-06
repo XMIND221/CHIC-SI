@@ -10,91 +10,9 @@ import Image from "next/image"
 import Link from "next/link"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
+import useSWR from "swr"
 
-const blogPosts = [
-  {
-    id: 1,
-    title: "Les Tendances Hijab Automne-Hiver 2024",
-    excerpt:
-      "Découvrez les couleurs, textures et styles qui marqueront la saison froide. Du velours luxueux aux tons terreux, explorez les tendances incontournables.",
-    content: "Cette saison, les hijabs se parent de couleurs chaudes et de textures riches...",
-    author: "Aminata Diallo",
-    date: "2024-01-15",
-    readTime: "5 min",
-    category: "Tendances",
-    image: "/blog-hijab-trends.png",
-    featured: true,
-    tags: ["Hijab", "Mode", "Tendances", "Automne-Hiver"],
-  },
-  {
-    id: 2,
-    title: "Comment Porter l'Abaya au Bureau : Guide Complet",
-    excerpt:
-      "L'abaya moderne s'invite dans le monde professionnel. Nos conseils pour allier élégance, confort et codes vestimentaires.",
-    content: "L'abaya professionnelle doit respecter certains codes tout en conservant son élégance...",
-    author: "Fatou Seck",
-    date: "2024-01-12",
-    readTime: "7 min",
-    category: "Style Professionnel",
-    image: "/blog-professional-abaya.png",
-    featured: false,
-    tags: ["Abaya", "Bureau", "Professionnel", "Style"],
-  },
-  {
-    id: 3,
-    title: "L'Art du Drapé : Techniques de Nouage du Hijab",
-    excerpt:
-      "Maîtrisez les techniques traditionnelles et modernes pour sublimer votre hijab. Tutoriels pas à pas avec photos.",
-    content: "Le drapé du hijab est un art qui se transmet de génération en génération...",
-    author: "Khadija Ba",
-    date: "2024-01-10",
-    readTime: "10 min",
-    category: "Tutoriels",
-    image: "/blog-hijab-draping.png",
-    featured: true,
-    tags: ["Hijab", "Tutoriel", "Techniques", "Drapé"],
-  },
-  {
-    id: 4,
-    title: "Entretien des Tissus Précieux : Soie et Cachemire",
-    excerpt:
-      "Préservez la beauté de vos pièces en soie et cachemire avec nos conseils d'experts. Lavage, séchage et rangement.",
-    content: "Les tissus nobles nécessitent un soin particulier pour conserver leur éclat...",
-    author: "Mariam Touré",
-    date: "2024-01-08",
-    readTime: "6 min",
-    category: "Conseils",
-    image: "/blog-fabric-care.png",
-    featured: false,
-    tags: ["Entretien", "Soie", "Cachemire", "Conseils"],
-  },
-  {
-    id: 5,
-    title: "Mode Modeste : L'Évolution du Style Sénégalais",
-    excerpt: "Retour sur l'évolution de la mode modeste au Sénégal, de la tradition aux créations contemporaines.",
-    content: "La mode modeste sénégalaise puise ses racines dans une riche tradition...",
-    author: "Aïssatou Ndiaye",
-    date: "2024-01-05",
-    readTime: "8 min",
-    category: "Culture",
-    image: "/blog-senegalese-fashion.png",
-    featured: false,
-    tags: ["Culture", "Sénégal", "Histoire", "Mode"],
-  },
-  {
-    id: 6,
-    title: "Accessoires Hijab : Sublimer votre Look",
-    excerpt: "Épingles, bandeaux, bijoux de tête... Découvrez comment les accessoires transforment votre style hijab.",
-    content: "Les accessoires sont la touche finale qui personnalise votre look hijab...",
-    author: "Bineta Fall",
-    date: "2024-01-03",
-    readTime: "4 min",
-    category: "Accessoires",
-    image: "/blog-hijab-accessories.png",
-    featured: false,
-    tags: ["Accessoires", "Hijab", "Style", "Bijoux"],
-  },
-]
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 const categories = ["Tous", "Tendances", "Style Professionnel", "Tutoriels", "Conseils", "Culture", "Accessoires"]
 
@@ -102,17 +20,55 @@ export default function BlogPage() {
   const [selectedCategory, setSelectedCategory] = useState("Tous")
   const [searchTerm, setSearchTerm] = useState("")
 
-  const filteredPosts = blogPosts.filter((post) => {
+  const {
+    data: blogPosts = [],
+    error,
+    isLoading,
+  } = useSWR("/api/blog", fetcher, {
+    refreshInterval: 5000,
+  })
+
+  const filteredPosts = blogPosts.filter((post: any) => {
     const matchesCategory = selectedCategory === "Tous" || post.category === selectedCategory
     const matchesSearch =
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      (post.tags && post.tags.some((tag: string) => tag.toLowerCase().includes(searchTerm.toLowerCase())))
     return matchesCategory && matchesSearch
   })
 
-  const featuredPosts = blogPosts.filter((post) => post.featured)
-  const regularPosts = filteredPosts.filter((post) => !post.featured)
+  const featuredPosts = filteredPosts.filter((post: any) => post.is_featured)
+  const regularPosts = filteredPosts.filter((post: any) => !post.is_featured)
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Chargement des articles...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Erreur lors du chargement des articles</p>
+            <Button onClick={() => window.location.reload()}>Réessayer</Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -167,14 +123,14 @@ export default function BlogPage() {
           <div className="mb-16">
             <h2 className="text-2xl font-serif text-gray-900 mb-8 text-center">Articles à la Une</h2>
             <div className="grid lg:grid-cols-2 gap-8">
-              {featuredPosts.slice(0, 2).map((post) => (
+              {featuredPosts.slice(0, 2).map((post: any) => (
                 <Card
                   key={post.id}
                   className="group overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300"
                 >
                   <div className="relative aspect-[16/10] overflow-hidden">
                     <Image
-                      src={post.image || "/placeholder.svg?height=400&width=600"}
+                      src={post.image_url || "/placeholder.svg?height=400&width=600"}
                       alt={post.title}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -195,11 +151,11 @@ export default function BlogPage() {
                       </Badge>
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
-                        {new Date(post.date).toLocaleDateString("fr-FR")}
+                        {new Date(post.published_at || post.created_at).toLocaleDateString("fr-FR")}
                       </div>
                       <div className="flex items-center">
                         <Clock className="w-4 h-4 mr-1" />
-                        {post.readTime}
+                        {post.read_time || "5 min"}
                       </div>
                     </div>
 
@@ -231,14 +187,14 @@ export default function BlogPage() {
 
         {/* Regular Posts Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {regularPosts.map((post) => (
+          {regularPosts.map((post: any) => (
             <Card
               key={post.id}
               className="group overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300"
             >
               <div className="relative aspect-[4/3] overflow-hidden">
                 <Image
-                  src={post.image || "/placeholder.svg?height=300&width=400"}
+                  src={post.image_url || "/placeholder.svg?height=300&width=400"}
                   alt={post.title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -262,11 +218,11 @@ export default function BlogPage() {
                 <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
-                    {new Date(post.date).toLocaleDateString("fr-FR")}
+                    {new Date(post.published_at || post.created_at).toLocaleDateString("fr-FR")}
                   </div>
                   <div className="flex items-center">
                     <Clock className="w-4 h-4 mr-1" />
-                    {post.readTime}
+                    {post.read_time || "5 min"}
                   </div>
                 </div>
 
@@ -291,13 +247,15 @@ export default function BlogPage() {
                 </div>
 
                 {/* Tags */}
-                <div className="flex flex-wrap gap-1 mt-4">
-                  {post.tags.slice(0, 3).map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs border-gray-200 text-gray-600">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
+                {post.tags && post.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-4">
+                    {post.tags.slice(0, 3).map((tag: string) => (
+                      <Badge key={tag} variant="outline" className="text-xs border-gray-200 text-gray-600">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

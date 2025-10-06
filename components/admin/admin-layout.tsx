@@ -5,7 +5,7 @@ import type React from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Package, LogOut, Menu, X, Settings, ImageIcon, Tag } from "lucide-react"
+import { LayoutDashboard, Package, LogOut, Menu, X, Settings, ImageIcon, Tag, FileText } from "lucide-react"
 import { useState } from "react"
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -22,6 +22,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { name: "Produits", href: "/admin/products", icon: Package },
     { name: "Bannières", href: "/admin/banners", icon: ImageIcon },
     { name: "Catégories", href: "/admin/categories", icon: Tag },
+    { name: "Blog", href: "/admin/blog", icon: FileText },
     { name: "Paramètres", href: "/admin/settings", icon: Settings },
   ]
 
