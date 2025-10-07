@@ -25,6 +25,9 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-10">
+            <Link href="/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+              Accueil
+            </Link>
             <Link href="/boutique" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
               Boutique
             </Link>
@@ -63,6 +66,13 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-6 border-t border-border">
             <nav className="flex flex-col space-y-4">
+              <Link
+                href="/"
+                className="text-base font-medium text-foreground hover:text-primary"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Accueil
+              </Link>
               <Link
                 href="/boutique"
                 className="text-base font-medium text-foreground hover:text-primary"

@@ -62,6 +62,7 @@ export async function updateBlogPost(id: string, formData: FormData) {
   const excerpt = formData.get("excerpt") as string
   const content = formData.get("content") as string
   const author = formData.get("author") as string
+  const author_photo = formData.get("author_photo") as string
   const category = formData.get("category") as string
   const image_url = formData.get("image_url") as string
   const featured = formData.get("featured") === "true"
@@ -76,6 +77,7 @@ export async function updateBlogPost(id: string, formData: FormData) {
       excerpt,
       content,
       author,
+      author_photo,
       category,
       image_url,
       featured,
@@ -93,6 +95,7 @@ export async function updateBlogPost(id: string, formData: FormData) {
   revalidatePath("/admin/blog")
   revalidatePath("/blog")
   revalidatePath(`/blog/${slug}`)
+  revalidatePath("/", "layout")
   return { success: true }
 }
 
