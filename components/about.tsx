@@ -1,4 +1,7 @@
+"use client"
+
 import { Award, Heart, Truck, Headphones } from "lucide-react"
+import useSWR from "swr"
 
 const values = [
   {
@@ -23,16 +26,31 @@ const values = [
   },
 ]
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
+
 export default function About() {
+  const { data: settings } = useSWR("/api/settings", fetcher, {
+    refreshInterval: 5000,
+  })
+
+  const getSettingValue = (key: string, defaultValue: string) => {
+    const setting = settings?.find((s: any) => s.key === key)
+    return setting?.value || defaultValue
+  }
+
   return (
     <section id="about" className="py-24 bg-stone-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-20">
-          <h2 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-6">Pourquoi Si-Chic</h2>
+          <h2 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-6">
+            {getSettingValue("about_title", "Pourquoi Si-Chic")}
+          </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Depuis 3 ans, nous nous engageons à offrir des vêtements qui allient style moderne, qualité premium et
-            respect des valeurs
+            {getSettingValue(
+              "about_description",
+              "Depuis 3 ans, nous nous engageons à offrir des vêtements qui allient style moderne, qualité premium et respect des valeurs",
+            )}
           </p>
         </div>
 

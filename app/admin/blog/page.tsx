@@ -128,7 +128,7 @@ export default function AdminBlogPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="title">Titre *</Label>
                     <Input
@@ -150,30 +150,42 @@ export default function AdminBlogPage() {
                       placeholder="titre-de-larticle"
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="author_photo">Photo de l'auteur</Label>
+                    <Input
+                      id="author_photo"
+                      name="author_photo"
+                      defaultValue={editingPost?.author_photo}
+                      placeholder="URL de la photo"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="excerpt">Extrait *</Label>
-                  <Textarea
-                    id="excerpt"
-                    name="excerpt"
-                    defaultValue={editingPost?.excerpt}
-                    required
-                    rows={3}
-                    placeholder="Résumé de l'article"
-                  />
-                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="excerpt">Extrait *</Label>
+                    <Textarea
+                      id="excerpt"
+                      name="excerpt"
+                      defaultValue={editingPost?.excerpt}
+                      required
+                      rows={3}
+                      placeholder="Résumé de l'article"
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="content">Contenu (HTML) *</Label>
-                  <Textarea
-                    id="content"
-                    name="content"
-                    defaultValue={editingPost?.content}
-                    required
-                    rows={10}
-                    placeholder="<p>Contenu de l'article en HTML...</p>"
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="content">Contenu (HTML) *</Label>
+                    <Textarea
+                      id="content"
+                      name="content"
+                      defaultValue={editingPost?.content}
+                      required
+                      rows={10}
+                      placeholder="<p>Contenu de l'article en HTML...</p>"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-4">
@@ -210,25 +222,63 @@ export default function AdminBlogPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="image_url">Image de couverture</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="image_url"
-                      name="image_url"
-                      defaultValue={editingPost?.image_url}
-                      placeholder="URL de l'image ou uploadez"
-                      className="flex-1"
-                    />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="image_url">Image de couverture</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="image_url"
+                        name="image_url"
+                        defaultValue={editingPost?.image_url}
+                        placeholder="URL de l'image ou uploadez"
+                        className="flex-1"
+                      />
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={uploading}
+                        className="w-auto"
+                      />
+                    </div>
+                    {uploading && <p className="text-sm text-muted-foreground">Upload en cours...</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Upload photo auteur</Label>
                     <Input
                       type="file"
                       accept="image/*"
-                      onChange={handleImageUpload}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+
+                        setUploading(true)
+                        const formData = new FormData()
+                        formData.append("file", file)
+
+                        try {
+                          const response = await fetch("/api/upload", {
+                            method: "POST",
+                            body: formData,
+                          })
+
+                          if (!response.ok) throw new Error("Upload failed")
+
+                          const { url } = await response.json()
+                          const photoInput = document.getElementById("author_photo") as HTMLInputElement
+                          if (photoInput) photoInput.value = url
+                          alert("✅ Photo uploadée avec succès!")
+                        } catch (error) {
+                          alert("❌ Erreur lors de l'upload de la photo")
+                          console.error(error)
+                        } finally {
+                          setUploading(false)
+                        }
+                      }}
                       disabled={uploading}
-                      className="w-auto"
                     />
                   </div>
-                  {uploading && <p className="text-sm text-muted-foreground">Upload en cours...</p>}
                 </div>
 
                 <div className="space-y-2">

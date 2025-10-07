@@ -167,8 +167,18 @@ export default function BlogPage() {
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">{post.author}</span>
+                        {post.author_photo ? (
+                          <img
+                            src={post.author_photo || "/placeholder.svg"}
+                            alt={post.author}
+                            className="w-8 h-8 rounded-full object-cover border-2 border-rose-100"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center">
+                            <User className="w-4 h-4 text-rose-600" />
+                          </div>
+                        )}
+                        <span className="text-sm font-medium text-gray-700">{post.author}</span>
                       </div>
 
                       <Button asChild variant="ghost" className="text-rose-600 hover:text-rose-700">
@@ -234,8 +244,18 @@ export default function BlogPage() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{post.author}</span>
+                    {post.author_photo ? (
+                      <img
+                        src={post.author_photo || "/placeholder.svg"}
+                        alt={post.author}
+                        className="w-6 h-6 rounded-full object-cover border-2 border-rose-100"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-rose-100 flex items-center justify-center">
+                        <User className="w-3 h-3 text-rose-600" />
+                      </div>
+                    )}
+                    <span className="text-sm font-medium text-gray-700">{post.author}</span>
                   </div>
 
                   <Button asChild variant="ghost" size="sm" className="text-rose-600 hover:text-rose-700">

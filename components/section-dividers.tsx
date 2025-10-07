@@ -1,19 +1,35 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Sparkles, Heart, MessageCircle } from "lucide-react"
+import useSWR from "swr"
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export function PromoBanner() {
+  const { data: settings } = useSWR("/api/settings", fetcher, {
+    refreshInterval: 5000,
+  })
+
+  const getSettingValue = (key: string, defaultValue: string) => {
+    const setting = settings?.find((s: any) => s.key === key)
+    return setting?.value || defaultValue
+  }
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-r from-[#D4AF37]/10 via-[#C9A961]/5 to-[#D4AF37]/10 py-16">
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center justify-center text-center">
           <Sparkles className="mb-4 h-12 w-12 text-[#D4AF37]" />
-          <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">Découvrez Notre Collection Exclusive</h2>
+          <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+            {getSettingValue("banner1_title", "Découvrez Notre Collection Exclusive")}
+          </h2>
           <p className="mb-6 max-w-2xl text-lg text-muted-foreground">
-            Des pièces uniques qui allient tradition et modernité pour sublimer votre élégance
+            {getSettingValue("banner1_subtitle", "Des pièces uniques pour sublimer votre style")}
           </p>
           <Button asChild size="lg" className="bg-[#D4AF37] hover:bg-[#C9A961]">
-            <Link href="#boutique">
+            <Link href="/boutique">
               Explorer la boutique <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>
@@ -26,6 +42,15 @@ export function PromoBanner() {
 }
 
 export function NewArrivalsbanner() {
+  const { data: settings } = useSWR("/api/settings", fetcher, {
+    refreshInterval: 5000,
+  })
+
+  const getSettingValue = (key: string, defaultValue: string) => {
+    const setting = settings?.find((s: any) => s.key === key)
+    return setting?.value || defaultValue
+  }
+
   return (
     <div className="relative overflow-hidden bg-[#D4AF37]/5 py-20">
       <div
@@ -41,16 +66,18 @@ export function NewArrivalsbanner() {
           <div className="mb-4 inline-block rounded-full bg-[#D4AF37]/20 px-6 py-2 text-sm font-semibold text-[#D4AF37]">
             Nouveautés
           </div>
-          <h2 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">Les Tendances de la Saison</h2>
+          <h2 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">
+            {getSettingValue("banner2_title", "Les Tendances de la Saison")}
+          </h2>
           <p className="mb-8 text-lg text-muted-foreground">
-            Découvrez nos dernières créations inspirées des plus belles traditions sénégalaises
+            {getSettingValue("banner2_subtitle", "Les dernières tendances mode à découvrir")}
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button asChild variant="outline" size="lg">
               <Link href="#collections">Voir les collections</Link>
             </Button>
             <Button asChild size="lg" className="bg-[#D4AF37] hover:bg-[#C9A961]">
-              <Link href="#boutique">Acheter maintenant</Link>
+              <Link href="/boutique">Acheter maintenant</Link>
             </Button>
           </div>
         </div>
@@ -60,16 +87,26 @@ export function NewArrivalsbanner() {
 }
 
 export function EleganceBanner() {
+  const { data: settings } = useSWR("/api/settings", fetcher, {
+    refreshInterval: 5000,
+  })
+
+  const getSettingValue = (key: string, defaultValue: string) => {
+    const setting = settings?.find((s: any) => s.key === key)
+    return setting?.value || defaultValue
+  }
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-background via-[#D4AF37]/5 to-background py-16">
       <div className="container mx-auto px-4">
         <div className="grid items-center gap-8 md:grid-cols-2">
           <div>
             <Heart className="mb-4 h-10 w-10 text-[#D4AF37]" />
-            <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">L'Élégance à la Sénégalaise</h2>
+            <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+              {getSettingValue("banner3_title", "L'Élégance à la Sénégalaise")}
+            </h2>
             <p className="mb-6 text-lg leading-relaxed text-muted-foreground">
-              Chaque pièce est soigneusement sélectionnée pour refléter la richesse de notre culture et la beauté de nos
-              traditions. Nous célébrons l'art du vêtement africain avec passion et authenticité.
+              {getSettingValue("banner3_subtitle", "Tradition et modernité en parfaite harmonie")}
             </p>
             <Button asChild variant="outline" size="lg">
               <Link href="#about">En savoir plus</Link>
@@ -94,20 +131,32 @@ export function EleganceBanner() {
 }
 
 export function CommunityCTA() {
+  const { data: settings } = useSWR("/api/settings", fetcher, {
+    refreshInterval: 5000,
+  })
+
+  const getSettingValue = (key: string, defaultValue: string) => {
+    const setting = settings?.find((s: any) => s.key === key)
+    return setting?.value || defaultValue
+  }
+
+  const whatsappNumber = getSettingValue("whatsapp_number", "+221784624991").replace(/\s/g, "")
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-r from-[#D4AF37]/10 to-[#C9A961]/10 py-16">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl text-center">
           <MessageCircle className="mx-auto mb-4 h-12 w-12 text-[#D4AF37]" />
-          <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">Rejoignez Notre Communauté</h2>
+          <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+            {getSettingValue("banner4_title", "Rejoignez Notre Communauté")}
+          </h2>
           <p className="mb-8 text-lg text-muted-foreground">
-            Commandez facilement via WhatsApp et bénéficiez d'un service personnalisé. Notre équipe est à votre écoute
-            pour vous conseiller.
+            {getSettingValue("banner4_subtitle", "Suivez-nous pour ne rien manquer")}
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button asChild size="lg" className="bg-[#25D366] hover:bg-[#20BA5A]">
               <a
-                href="https://wa.me/221784624991?text=Bonjour%2C%20je%20suis%20intéressé(e)%20par%20vos%20produits"
+                href={`https://wa.me/${whatsappNumber}?text=Bonjour%2C%20je%20suis%20intéressé(e)%20par%20vos%20produits`}
                 target="_blank"
                 rel="noopener noreferrer"
               >

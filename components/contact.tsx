@@ -1,9 +1,27 @@
+"use client"
+
 import { Mail, Phone, MapPin, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import useSWR from "swr"
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export default function Contact() {
-  const whatsappNumber = "+221784624991"
+  const { data: settings } = useSWR("/api/settings", fetcher, {
+    refreshInterval: 5000,
+  })
+
+  const getSettingValue = (key: string, defaultValue: string) => {
+    const setting = settings?.find((s: any) => s.key === key)
+    return setting?.value || defaultValue
+  }
+
+  const whatsappNumber = getSettingValue("whatsapp_number", "+221784624991").replace(/\s/g, "")
+  const contactEmail = getSettingValue("contact_email", "contact@si-chic.sn")
+  const contactPhone = getSettingValue("contact_phone", "+221 78 462 49 91")
+  const contactAddress = getSettingValue("contact_address", "DD 33 Derklé, Dakar, Sénégal")
+
   const whatsappMessage = encodeURIComponent(
     "Bonjour Si-Chic, je souhaite obtenir plus d'informations sur vos produits.",
   )
@@ -26,7 +44,7 @@ export default function Contact() {
               <MapPin className="w-7 h-7 text-primary" />
             </div>
             <h3 className="font-semibold text-lg mb-2">Adresse</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">DD 33 Derklé, Dakar, Sénégal</p>
+            <p className="text-muted-foreground text-sm leading-relaxed">{contactAddress}</p>
           </Card>
 
           <Card className="p-6 text-center hover:shadow-lg transition-shadow border-primary/20">
@@ -35,7 +53,7 @@ export default function Contact() {
             </div>
             <h3 className="font-semibold text-lg mb-2">Téléphone</h3>
             <a href={`tel:${whatsappNumber}`} className="text-muted-foreground text-sm hover:text-primary">
-              +221 78 462 49 91
+              {contactPhone}
             </a>
           </Card>
 
@@ -44,8 +62,8 @@ export default function Contact() {
               <Mail className="w-7 h-7 text-primary" />
             </div>
             <h3 className="font-semibold text-lg mb-2">Email</h3>
-            <a href="mailto:contact@si-chic.sn" className="text-muted-foreground text-sm hover:text-primary">
-              contact@si-chic.sn
+            <a href={`mailto:${contactEmail}`} className="text-muted-foreground text-sm hover:text-primary">
+              {contactEmail}
             </a>
           </Card>
 
