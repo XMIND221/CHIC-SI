@@ -28,20 +28,17 @@ export default function Header() {
             <Link href="/boutique" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
               Boutique
             </Link>
-            <Link
-              href="#collections"
-              className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-            >
-              Collections
-            </Link>
             <Link href="/blog" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
               Blog
             </Link>
-            <Link href="#about" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+            <Link href="/about" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
               À Propos
             </Link>
-            <Link href="#contact" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+            <Link href="/contact" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
               Contact
+            </Link>
+            <Link href="/faq" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+              FAQ
             </Link>
           </nav>
 
@@ -74,13 +71,6 @@ export default function Header() {
                 Boutique
               </Link>
               <Link
-                href="#collections"
-                className="text-base font-medium text-foreground hover:text-primary"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Collections
-              </Link>
-              <Link
                 href="/blog"
                 className="text-base font-medium text-foreground hover:text-primary"
                 onClick={() => setIsMenuOpen(false)}
@@ -88,18 +78,25 @@ export default function Header() {
                 Blog
               </Link>
               <Link
-                href="#about"
+                href="/about"
                 className="text-base font-medium text-foreground hover:text-primary"
                 onClick={() => setIsMenuOpen(false)}
               >
                 À Propos
               </Link>
               <Link
-                href="#contact"
+                href="/contact"
                 className="text-base font-medium text-foreground hover:text-primary"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
+              </Link>
+              <Link
+                href="/faq"
+                className="text-base font-medium text-foreground hover:text-primary"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                FAQ
               </Link>
             </nav>
           </div>
