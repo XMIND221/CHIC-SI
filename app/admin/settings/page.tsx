@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, Save, SettingsIcon } from "lucide-react"
+import { Loader2, Save, SettingsIcon, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 import useSWR, { mutate } from "swr"
 
 interface Setting {
@@ -73,6 +74,7 @@ export default function SettingsPage() {
     contact: "Contact",
     about: "À Propos",
     hero: "Page d'Accueil",
+    appearance: "Apparence", // Added appearance category
   }
 
   if (isLoading) {
@@ -88,6 +90,13 @@ export default function SettingsPage() {
   return (
     <AdminLayout>
       <div className="space-y-8">
+        <Link href="/admin/dashboard">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Retour au tableau de bord
+          </Button>
+        </Link>
+
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
@@ -110,7 +119,26 @@ export default function SettingsPage() {
                     <Label htmlFor={setting.key}>{setting.label}</Label>
                     {setting.description && <p className="text-sm text-muted-foreground">{setting.description}</p>}
                     <div className="flex gap-2">
-                      {setting.key.includes("description") || setting.key.includes("subtitle") ? (
+                      {setting.key.includes("color") ? (
+                        <div className="flex gap-2 flex-1">
+                          <Input
+                            type="color"
+                            id={setting.key}
+                            value={editedValues[setting.key] || "#000000"}
+                            onChange={(e) => setEditedValues({ ...editedValues, [setting.key]: e.target.value })}
+                            className="w-20 h-12 cursor-pointer"
+                          />
+                          <Input
+                            type="text"
+                            value={editedValues[setting.key] || ""}
+                            onChange={(e) => setEditedValues({ ...editedValues, [setting.key]: e.target.value })}
+                            placeholder="#000000"
+                            className="flex-1"
+                          />
+                        </div>
+                      ) : setting.key.includes("description") ||
+                        setting.key.includes("subtitle") ||
+                        setting.key.includes("info") ? (
                         <Textarea
                           id={setting.key}
                           value={editedValues[setting.key] || ""}

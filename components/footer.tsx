@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Mail, Phone, MapPin } from "lucide-react"
+import { Facebook, Instagram, Mail, Phone, MapPin, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function Footer() {
@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="bg-foreground text-background">
       <div className="bg-foreground/95 py-12 border-b border-background/10">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8 text-center md:text-left">
+          <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-8 text-center md:text-left">
             <div className="space-y-2">
               <MapPin className="w-6 h-6 mx-auto md:mx-0 mb-2 text-primary" />
               <p className="font-semibold">DD 33 Derklé</p>
@@ -23,6 +23,12 @@ export default function Footer() {
               <Mail className="w-6 h-6 mx-auto md:mx-0 mb-2 text-primary" />
               <p className="font-semibold">contact@si-chic.sn</p>
               <p className="text-background/70 text-sm">Réponse sous 24h</p>
+            </div>
+
+            <div className="space-y-2">
+              <Truck className="w-6 h-6 mx-auto md:mx-0 mb-2 text-primary" />
+              <p className="font-semibold">Livraisons Weekend</p>
+              <p className="text-background/70 text-sm">Samedi et Dimanche</p>
             </div>
           </div>
         </div>
