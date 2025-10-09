@@ -12,6 +12,7 @@ import Image from "next/image"
 import Link from "next/link"
 import Header from "@/components/header"
 import OrderModal, { type OrderFormData } from "@/components/order-modal"
+import useSWR from "swr"
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat("fr-FR", {
@@ -24,13 +25,24 @@ const formatPrice = (price: number) => {
     .replace("XAF", "FCFA")
 }
 
-const WHATSAPP_NUMBER = "221771234567"
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart } = useCartStore()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const { data: settings } = useSWR("/api/settings", fetcher, {
+    refreshInterval: 5000,
+  })
+
+  const getSettingValue = (key: string, defaultValue: string) => {
+    const setting = settings?.find((s: any) => s.key === key)
+    return setting?.value || defaultValue
+  }
+
+  const whatsappNumber = getSettingValue("whatsapp_number", "+221784624991").replace(/\s/g, "")
 
   useEffect(() => {
     if (items.length === 0) {
@@ -76,7 +88,6 @@ export default function CheckoutPage() {
       const result = await response.json()
       console.log("[v0] Customer account created successfully:", result)
 
-      // Créer le message WhatsApp avec toutes les informations
       const subtotal = getTotalPrice()
       const shipping = subtotal > 100000 ? 0 : 5000
       const total = subtotal + shipping
@@ -139,7 +150,7 @@ export default function CheckoutPage() {
       console.log("[v0] WhatsApp message created, redirecting...")
 
       const encodedMessage = encodeURIComponent(message)
-      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`
 
       clearCart()
       window.open(whatsappUrl, "_blank")
