@@ -74,7 +74,7 @@ export function NewArrivalsbanner() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button asChild variant="outline" size="lg">
-              <Link href="#collections">Voir les collections</Link>
+              <Link href="/boutique">Voir les collections</Link>
             </Button>
             <Button asChild size="lg" className="bg-[#D4AF37] hover:bg-[#C9A961]">
               <Link href="/boutique">Acheter maintenant</Link>
@@ -109,7 +109,7 @@ export function EleganceBanner() {
               {getSettingValue("banner3_subtitle", "Tradition et modernité en parfaite harmonie")}
             </p>
             <Button asChild variant="outline" size="lg">
-              <Link href="#about">En savoir plus</Link>
+              <Link href="/about">En savoir plus</Link>
             </Button>
           </div>
           <div className="relative h-64 md:h-80">
@@ -165,7 +165,7 @@ export function CommunityCTA() {
               </a>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="#contact">Nous contacter</Link>
+              <Link href="/contact">Nous contacter</Link>
             </Button>
           </div>
         </div>

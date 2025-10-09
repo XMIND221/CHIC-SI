@@ -31,7 +31,7 @@ export default function Trends() {
     )
   }
 
-  if (!trends || trends.length === 0) {
+  if (!trends || !Array.isArray(trends) || trends.length === 0) {
     return null
   }
 

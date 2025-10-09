@@ -61,8 +61,8 @@ export default function BoutiquePreview() {
     })
   }
 
-  // Show only first 3 products
-  const previewProducts = products.slice(0, 3)
+  const productsArray = Array.isArray(products) ? products : []
+  const previewProducts = productsArray.slice(0, 3)
 
   if (isLoading) {
     return (
