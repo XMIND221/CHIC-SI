@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
 import { useState, useEffect } from "react"
 import useSWR from "swr"
+import Link from "next/link"
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -177,9 +178,14 @@ export default function Categories() {
                   <div className="text-lg font-bold text-primary">À partir de {category.startingPrice}</div>
                 </div>
 
-                <Button className="w-full bg-gradient-to-r from-primary via-amber-400 to-rose-400 hover:opacity-90 text-white font-semibold shadow-md hover:shadow-lg transition-all">
-                  Découvrir
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                <Button
+                  className="w-full bg-gradient-to-r from-primary via-amber-400 to-rose-400 hover:opacity-90 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                  asChild
+                >
+                  <Link href="/boutique">
+                    Découvrir
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
                 </Button>
               </div>
             </div>

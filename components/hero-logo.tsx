@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
 export default function HeroLogo() {
@@ -22,11 +23,15 @@ export default function HeroLogo() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-foreground hover:bg-foreground/90 text-background text-base h-12 px-8">
-                Explorer la boutique
+              <Button
+                size="lg"
+                className="bg-foreground hover:bg-foreground/90 text-background text-base h-12 px-8"
+                asChild
+              >
+                <Link href="/boutique">Explorer la boutique</Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-base h-12 px-8 bg-transparent">
-                Prendre rendez-vous
+              <Button size="lg" variant="outline" className="text-base h-12 px-8 bg-transparent" asChild>
+                <Link href="/contact">Prendre rendez-vous</Link>
               </Button>
             </div>
 
