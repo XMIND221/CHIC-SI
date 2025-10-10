@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,29 +11,21 @@ import { Plus, Pencil, Trash2, ImageIcon, ArrowLeft } from "lucide-react"
 import { getBanners, createBanner, updateBanner, deleteBanner, type Banner } from "./actions"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { useRouter } from "next/navigation"
+import useSWR from "swr"
 
 export default function BannersAdminPage() {
   const router = useRouter()
-  const [banners, setBanners] = useState<Banner[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const {
+    data: banners = [],
+    mutate,
+    isLoading,
+  } = useSWR("banners", getBanners, {
+    refreshInterval: 2000,
+    revalidateOnFocus: true,
+  })
+
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null)
   const [showForm, setShowForm] = useState(false)
-
-  useEffect(() => {
-    loadBanners()
-  }, [])
-
-  async function loadBanners() {
-    try {
-      const data = await getBanners()
-      setBanners(data)
-    } catch (error) {
-      console.error("Error loading banners:", error)
-      alert("Erreur lors du chargement des bannières")
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -49,7 +41,7 @@ export default function BannersAdminPage() {
       }
       setShowForm(false)
       setEditingBanner(null)
-      await loadBanners()
+      mutate()
     } catch (error) {
       console.error("Error saving banner:", error)
       alert("❌ Erreur lors de la sauvegarde")
@@ -62,19 +54,11 @@ export default function BannersAdminPage() {
     try {
       await deleteBanner(id)
       alert("✅ Bannière supprimée avec succès!")
-      await loadBanners()
+      mutate()
     } catch (error) {
       console.error("Error deleting banner:", error)
       alert("❌ Erreur lors de la suppression")
     }
-  }
-
-  if (isLoading) {
-    return (
-      <AdminLayout>
-        <div className="p-8">Chargement...</div>
-      </AdminLayout>
-    )
   }
 
   return (
@@ -178,6 +162,11 @@ export default function BannersAdminPage() {
         )}
 
         <div className="grid gap-4">
+          {banners.length === 0 && !isLoading && (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">Aucune bannière pour le moment. Créez-en une!</p>
+            </Card>
+          )}
           {banners.map((banner) => (
             <Card key={banner.id} className="p-4">
               <div className="flex gap-4">
