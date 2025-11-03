@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
 import { useState, useEffect } from "react"
 import useSWR from "swr"
-import CollectionModal from "./collection-modal"
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -46,10 +45,6 @@ const categories = [
 
 export default function Categories() {
   const [currentBanner, setCurrentBanner] = useState(0)
-  const [selectedCollection, setSelectedCollection] = useState<{
-    name: string
-    description: string
-  } | null>(null)
 
   const { data: banners = [] } = useSWR("/api/banners", fetcher, {
     refreshInterval: 5000,
@@ -182,15 +177,7 @@ export default function Categories() {
                   <div className="text-lg font-bold text-primary">À partir de {category.startingPrice}</div>
                 </div>
 
-                <Button
-                  className="w-full bg-gradient-to-r from-primary via-amber-400 to-rose-400 hover:opacity-90 text-white font-semibold shadow-md hover:shadow-lg transition-all"
-                  onClick={() =>
-                    setSelectedCollection({
-                      name: category.name,
-                      description: category.description,
-                    })
-                  }
-                >
+                <Button className="w-full bg-gradient-to-r from-primary via-amber-400 to-rose-400 hover:opacity-90 text-white font-semibold shadow-md hover:shadow-lg transition-all">
                   Découvrir
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -199,16 +186,6 @@ export default function Categories() {
           ))}
         </div>
       </div>
-
-      {/* Collection Modal */}
-      {selectedCollection && (
-        <CollectionModal
-          isOpen={!!selectedCollection}
-          onClose={() => setSelectedCollection(null)}
-          collectionName={selectedCollection.name}
-          collectionDescription={selectedCollection.description}
-        />
-      )}
     </section>
   )
 }

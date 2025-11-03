@@ -40,10 +40,12 @@ export const useCartStore = create<CartStore>()(
       isOpen: false,
 
       addItem: (item) => {
+        console.log("[v0] Cart store addItem called with:", item)
         const items = get().items
         const existingItem = !item.isCustom ? items.find((i) => i.id === item.id && !i.isCustom) : null
 
         if (existingItem) {
+          console.log("[v0] Updating existing item quantity")
           set({
             items: items.map((i) => (i.id === item.id && !i.isCustom ? { ...i, quantity: i.quantity + 1 } : i)),
           })
@@ -51,15 +53,19 @@ export const useCartStore = create<CartStore>()(
           const newItem = item.isCustom
             ? { ...item, id: Date.now() + Math.random(), quantity: 1 }
             : { ...item, quantity: 1 }
+          console.log("[v0] Adding new item to cart:", newItem)
           set({ items: [...items, newItem] })
         }
+        console.log("[v0] Cart items after add:", get().items)
       },
 
       removeItem: (id) => {
+        console.log("[v0] Removing item from cart:", id)
         set({ items: get().items.filter((item) => item.id !== id) })
       },
 
       updateQuantity: (id, quantity) => {
+        console.log("[v0] Updating quantity for item:", id, "to:", quantity)
         if (quantity <= 0) {
           get().removeItem(id)
           return
@@ -71,15 +77,19 @@ export const useCartStore = create<CartStore>()(
       },
 
       clearCart: () => {
+        console.log("[v0] Clearing cart")
         set({ items: [] })
       },
 
       toggleCart: () => {
+        console.log("[v0] Toggling cart, current state:", get().isOpen)
         set({ isOpen: !get().isOpen })
       },
 
       getTotalItems: () => {
-        return get().items.reduce((total, item) => total + item.quantity, 0)
+        const total = get().items.reduce((total, item) => total + item.quantity, 0)
+        console.log("[v0] Total items in cart:", total)
+        return total
       },
 
       getTotalPrice: () => {

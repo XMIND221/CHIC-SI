@@ -1,6 +1,5 @@
 import { Facebook, Instagram, Mail, Phone, MapPin, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
 
 export default function Footer() {
   return (
@@ -64,24 +63,24 @@ export default function Footer() {
             <h4 className="text-lg font-semibold">Navigation</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/boutique" className="text-background/70 hover:text-background transition-colors text-sm">
+                <a href="#boutique" className="text-background/70 hover:text-background transition-colors text-sm">
                   Boutique
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/boutique" className="text-background/70 hover:text-background transition-colors text-sm">
+                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
                   Hijabs
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/boutique" className="text-background/70 hover:text-background transition-colors text-sm">
+                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
                   Abayas
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/boutique" className="text-background/70 hover:text-background transition-colors text-sm">
+                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
                   Sur Mesure
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -90,24 +89,24 @@ export default function Footer() {
             <h4 className="text-lg font-semibold">Support</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/faq" className="text-background/70 hover:text-background transition-colors text-sm">
+                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
                   Guide des tailles
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/faq" className="text-background/70 hover:text-background transition-colors text-sm">
+                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
                   Livraison & Retours
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/faq" className="text-background/70 hover:text-background transition-colors text-sm">
+                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
                   FAQ
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/contact" className="text-background/70 hover:text-background transition-colors text-sm">
+                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
                   Contact
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -116,19 +115,19 @@ export default function Footer() {
             <h4 className="text-lg font-semibold">Informations</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/about" className="text-background/70 hover:text-background transition-colors text-sm">
+                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
                   À propos
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/faq" className="text-background/70 hover:text-background transition-colors text-sm">
+                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
                   Politique de confidentialité
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/faq" className="text-background/70 hover:text-background transition-colors text-sm">
+                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
                   Mentions légales
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

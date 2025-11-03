@@ -7,10 +7,10 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Calendar, Clock, User, Search, Tag, ArrowRight, Heart, Share2 } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import useSWR from "swr"
-import BlogArticleModal from "@/components/blog-article-modal"
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -19,7 +19,6 @@ const categories = ["Tous", "Tendances", "Style Professionnel", "Tutoriels", "Co
 export default function BlogPage() {
   const [selectedCategory, setSelectedCategory] = useState("Tous")
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedPost, setSelectedPost] = useState<any>(null)
 
   const {
     data: blogPosts = [],
@@ -182,13 +181,11 @@ export default function BlogPage() {
                         <span className="text-sm font-medium text-gray-700">{post.author}</span>
                       </div>
 
-                      <Button
-                        variant="ghost"
-                        className="text-rose-600 hover:text-rose-700"
-                        onClick={() => setSelectedPost(post)}
-                      >
-                        Lire la suite
-                        <ArrowRight className="w-4 h-4 ml-2" />
+                      <Button asChild variant="ghost" className="text-rose-600 hover:text-rose-700">
+                        <Link href={`/blog/${post.id}`}>
+                          Lire la suite
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Link>
                       </Button>
                     </div>
                   </CardContent>
@@ -261,14 +258,11 @@ export default function BlogPage() {
                     <span className="text-sm font-medium text-gray-700">{post.author}</span>
                   </div>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-rose-600 hover:text-rose-700"
-                    onClick={() => setSelectedPost(post)}
-                  >
-                    Lire
-                    <ArrowRight className="w-4 h-4 ml-1" />
+                  <Button asChild variant="ghost" size="sm" className="text-rose-600 hover:text-rose-700">
+                    <Link href={`/blog/${post.id}`}>
+                      Lire
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Link>
                   </Button>
                 </div>
 
@@ -330,8 +324,6 @@ export default function BlogPage() {
       </div>
 
       <Footer />
-
-      <BlogArticleModal post={selectedPost} isOpen={!!selectedPost} onClose={() => setSelectedPost(null)} />
     </div>
   )
 }

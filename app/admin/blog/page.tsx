@@ -19,8 +19,7 @@ const categories = ["Tendances", "Style Professionnel", "Tutoriels", "Conseils",
 
 export default function AdminBlogPage() {
   const { data: posts, mutate } = useSWR("blog-posts", getBlogPosts, {
-    refreshInterval: 1000,
-    revalidateOnFocus: true,
+    refreshInterval: 5000,
   })
 
   const [showForm, setShowForm] = useState(false)

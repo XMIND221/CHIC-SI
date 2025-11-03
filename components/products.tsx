@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { ShoppingBag, Heart } from "lucide-react"
 import { useCartStore } from "@/lib/cart-store"
 import Image from "next/image"
-import Link from "next/link"
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat("fr-FR", {
@@ -142,9 +141,8 @@ export default function Products() {
             size="lg"
             variant="outline"
             className="border-stone-900 text-stone-900 hover:bg-stone-50 bg-transparent"
-            asChild
           >
-            <Link href="/boutique">Voir toute la collection</Link>
+            Voir toute la collection
           </Button>
         </div>
       </div>
